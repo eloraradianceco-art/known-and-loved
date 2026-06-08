@@ -1,529 +1,817 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
   <title>Known &amp; Loved</title>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; }
-    body { background: #0e0906; font-family: Georgia, serif; -webkit-tap-highlight-color: transparent; }
-    #root { min-height: 100vh; }
-    input, textarea, button { font-family: inherit; }
-    input::placeholder, textarea::placeholder { color: #6a5e50; }
-    textarea { resize: none; }
-    @keyframes fadeUp   { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:translateY(0) } }
-    @keyframes fadeIn   { from { opacity:0 } to { opacity:1 } }
-    @keyframes pulse    { 0%,100% { opacity:.4 } 50% { opacity:.85 } }
-    @keyframes breathe  { 0%,100% { transform:scale(1) } 50% { transform:scale(1.06) } }
-    @keyframes ripple   { 0% { transform:scale(.8); opacity:.6 } 100% { transform:scale(2.2); opacity:0 } }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{background:#0e0906;font-family:Georgia,serif;-webkit-tap-highlight-color:transparent}
+    #root{min-height:100vh}
+    input,textarea,button{font-family:inherit}
+    input::placeholder,textarea::placeholder{color:#6a5e50}
+    textarea{resize:none}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes pulse{0%,100%{opacity:.4}50%{opacity:.85}}
+    @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+    @keyframes ripple{0%{transform:scale(.8);opacity:.6}100%{transform:scale(2.2);opacity:0}}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
   </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect } = React;
+const{useState,useEffect,useRef}=React;
+const{createClient}=supabase;
+const SB=createClient(
+  'https://hxqkzosvovhbizuefuii.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4cWt6b3N2b3ZoYml6dWVmdWlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4ODA1MTgsImV4cCI6MjA5NjQ1NjUxOH0.l26BqXiGdNvyVWMJEfrgdNIUB4IM1rAA7P6sPb-LTbM'
+);
 
-/* ── Storage (localStorage for GitHub Pages) ─────────────────────────────── */
-function loadFavs() {
-  try { return JSON.parse(localStorage.getItem("kl_favs") || "[]"); } catch { return []; }
-}
-function saveFavs(f) {
-  try { localStorage.setItem("kl_favs", JSON.stringify(f)); } catch {}
-}
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
 
-/* ── Card Data ───────────────────────────────────────────────────────────── */
-const CARDS = {
-  discover: [
-    { q: "What does a typical Sunday morning look like for you?", v: null },
-    { q: "What's one thing your faith has taught you about yourself that surprised you?", v: null },
-    { q: "Who in your life models Christlike love most naturally — and what do you admire about them?", v: null },
-    { q: "What's the last thing — big or small — that made you feel genuinely grateful?", v: null },
-    { q: "How do you most love to experience God's creation? A mountain trail, the ocean, a quiet field?", v: null },
-    { q: "What does rest look like for you — and do you actually give yourself permission to take it?", v: null },
-    { q: "If your life right now had a theme song, what would it be?", v: null },
-    { q: "What's a book — Bible or otherwise — that left a real mark on how you see the world?", v: null },
-    { q: "What's something you're genuinely looking forward to in this season of life?", v: null },
-    { q: "How did faith first become personal to you — not just inherited, but something you chose?", v: null },
-    { q: "What does your church community mean to you — and what do you wish it were more of?", v: null },
-    { q: "What small, everyday habit keeps you most anchored to God?", v: null },
-    { q: "What's a place you've been that made you feel closest to God?", v: null },
-    { q: "What's something about you that most people misread when they first meet you?", v: null },
-    { q: "What's a dream you've held onto quietly that still hasn't left you?", v: null },
-    { q: "How do you handle a hard day — what do you reach for first?", v: null },
-    { q: "What does your relationship with your family look like, and how has it shaped you?", v: null },
-    { q: "What's something you love about this season of your life that you hope carries into a relationship?", v: null },
-    { q: "What does generosity look like in your everyday life — not just financially?", v: null },
-    { q: "What's a lesson God has been teaching you lately that you didn't ask for?", v: null },
-    { q: "What are you most passionate about outside of faith — and does faith show up in it?", v: null },
-    { q: "Who do you go to when things get hard, and what makes them feel safe?", v: null },
-    { q: "What's the kindest thing someone has ever done for you?", v: null },
-    { q: "What does friendship mean to you — and what kind of friend are you, honestly?", v: null },
-    { q: "What's something you've changed your mind about in the last few years?", v: null },
-    { q: "What's a hobby or interest that brings you real joy that you rarely get to talk about?", v: null },
-    { q: "If you could spend a whole day doing anything, completely guilt-free, what would it be?", v: null },
-    { q: "What does worship look like for you outside of a church building?", v: null },
-    { q: "What's one thing most people don't know about you that you actually want them to?", v: null },
-    { q: "What does a life well-lived look like to you — in the everyday, not just the big moments?", v: null },
+function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join('')}
+function seeded(arr,seed){
+  let s=0;for(let i=0;i<seed.length;i++)s=(s+seed.charCodeAt(i))&0xffffffff;
+  const r=()=>{s|=0;s=s+0x6d2b79f5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;
+}
+const shuffle=a=>[...a].sort(()=>Math.random()-.5);
+
+const CARDS={
+  discover:[
+    {q:"What does a typical Sunday morning look like for you?",v:null},
+    {q:"What's one thing your faith has taught you about yourself that surprised you?",v:null},
+    {q:"Who in your life models Christlike love most naturally — and what do you admire about them?",v:null},
+    {q:"What's the last thing — big or small — that made you feel genuinely grateful?",v:null},
+    {q:"How do you most love to experience God's creation? A trail, the ocean, a quiet field?",v:null},
+    {q:"What does rest look like for you — and do you give yourself permission to take it?",v:null},
+    {q:"If your life right now had a theme song, what would it be?",v:null},
+    {q:"What's a book — Bible or otherwise — that left a real mark on how you see the world?",v:null},
+    {q:"What's something you're genuinely looking forward to in this season of life?",v:null},
+    {q:"How did faith first become personal to you — not just inherited, but something you chose?",v:null},
+    {q:"What does your church community mean to you — and what do you wish it were more of?",v:null},
+    {q:"What small, everyday habit keeps you most anchored to God?",v:null},
+    {q:"What's a place you've been that made you feel closest to God?",v:null},
+    {q:"What's something about you that most people misread when they first meet you?",v:null},
+    {q:"What's a dream you've held onto quietly that still hasn't left you?",v:null},
+    {q:"How do you handle a hard day — what do you reach for first?",v:null},
+    {q:"What does your relationship with your family look like, and how has it shaped you?",v:null},
+    {q:"What's something you love about this season that you hope carries into a relationship?",v:null},
+    {q:"What does generosity look like in your everyday life — not just financially?",v:null},
+    {q:"What's a lesson God has been teaching you lately that you didn't ask for?",v:null},
+    {q:"Who do you go to when things get hard, and what makes them feel safe?",v:null},
+    {q:"What's the kindest thing someone has ever done for you?",v:null},
+    {q:"What does friendship mean to you — and what kind of friend are you, honestly?",v:null},
+    {q:"What's something you've changed your mind about in the last few years?",v:null},
+    {q:"If you could spend a whole day doing anything guilt-free, what would it be?",v:null},
+    {q:"What does worship look like for you outside of a church building?",v:null},
+    {q:"What's one thing most people don't know about you that you actually want them to?",v:null},
+    {q:"What does a life well-lived look like to you — in the everyday?",v:null},
+    {q:"What are you most passionate about outside of faith — and does faith show up in it?",v:null},
+    {q:"What's a hobby or interest that brings you real joy you rarely get to talk about?",v:null},
   ],
-  deepen: [
-    { q: "How has your faith changed in the last five years — and what caused that shift?", v: "\"Trust in the Lord with all your heart.\" — Proverbs 3:5" },
-    { q: "What does prayer look like in your actual daily life — not ideally, but honestly?", v: "\"Pray without ceasing.\" — 1 Thessalonians 5:17" },
-    { q: "What values in a relationship are completely non-negotiable for you?", v: null },
-    { q: "What does handling conflict look like for you in practice? Where does forgiveness get hard?", v: "\"Be kind to one another, tenderhearted, forgiving.\" — Ephesians 4:32" },
-    { q: "What does financial stewardship look like to you — and how do you think about generosity?", v: null },
-    { q: "How do you navigate seasons when God feels distant or silent?", v: "\"Even the darkness is not dark to you.\" — Psalm 139:12" },
-    { q: "What does 'being equally yoked' mean to you practically — beyond just attending church?", v: "\"Do not be unequally yoked.\" — 2 Corinthians 6:14" },
-    { q: "What's your love language — and how does it connect to how you experience God's love for you?", v: null },
-    { q: "How do you think about emotional and physical boundaries in dating? What guides those decisions?", v: null },
-    { q: "What's a belief you hold that you think most people — even other Christians — misunderstand?", v: null },
-    { q: "What does trusting God look like for you in something you genuinely can't control right now?", v: "\"Cast all your anxiety on him.\" — 1 Peter 5:7" },
-    { q: "What role do you want faith to play in a future marriage — concretely, day-to-day?", v: null },
-    { q: "Do you feel like you know your calling — and how does it shape the decisions you're making now?", v: null },
-    { q: "What does accountability look like in your life — do you have it, and do you actually want it?", v: null },
-    { q: "How do you approach serving others — naturally, or something you have to be intentional about?", v: null },
-    { q: "What does emotional health mean to you — and how has your faith shaped how you tend to it?", v: null },
-    { q: "What's your posture toward church leadership, mentors, and spiritual authority in your life?", v: null },
-    { q: "How do you think about children — do you want them, and how central is faith to how you'd raise them?", v: null },
-    { q: "What does integrity look like for you when no one is watching?", v: null },
-    { q: "What does it mean to you to love someone well, long-term — not in feeling, but in daily commitment?", v: "\"Love is patient, love is kind.\" — 1 Corinthians 13:4" },
-    { q: "How much do you value solitude versus community — and how does that shape your daily rhythms?", v: null },
-    { q: "What's something about modern Christian culture that you genuinely wrestle with?", v: null },
-    { q: "What does pursuing holiness actually look like for you — not as performance, but as real desire?", v: null },
-    { q: "What does it mean to you to be a person of your word?", v: null },
-    { q: "What does it look like when anxiety or fear takes over for you — and how does faith show up in those moments?", v: null },
-    { q: "How do you handle temptation — and what structures do you have in place to protect yourself?", v: null },
-    { q: "What does honoring your parents look like for you — and how do you navigate it when it's complicated?", v: null },
-    { q: "What does rest mean to you as an act of trust in God — not just recovery?", v: "\"He grants sleep to those he loves.\" — Psalm 127:2" },
-    { q: "What's a conviction you've held quietly that you've never been fully asked about?", v: null },
-    { q: "If your relationship were to honor God above everything else, what would that actually require of both of you?", v: null },
+  deepen:[
+    {q:"How has your faith changed in the last five years — and what caused that shift?",v:'"Trust in the Lord with all your heart." — Proverbs 3:5'},
+    {q:"What does prayer look like in your actual daily life — not ideally, but honestly?",v:'"Pray without ceasing." — 1 Thessalonians 5:17'},
+    {q:"What values in a relationship are completely non-negotiable for you?",v:null},
+    {q:"What does handling conflict look like in practice? Where does forgiveness get hard?",v:'"Be kind, tenderhearted, forgiving." — Ephesians 4:32'},
+    {q:"What does financial stewardship look like to you — and how do you think about generosity?",v:null},
+    {q:"How do you navigate seasons when God feels distant or silent?",v:'"Even the darkness is not dark to you." — Psalm 139:12'},
+    {q:"What does being equally yoked mean to you practically — beyond just attending church?",v:'"Do not be unequally yoked." — 2 Corinthians 6:14'},
+    {q:"What's your love language — and how does it connect to how you experience God's love?",v:null},
+    {q:"How do you think about emotional and physical boundaries in dating?",v:null},
+    {q:"What does trusting God look like in something you genuinely can't control?",v:'"Cast all your anxiety on him." — 1 Peter 5:7'},
+    {q:"What role do you want faith to play in a future marriage — concretely?",v:null},
+    {q:"Do you feel like you know your calling — and how does it shape your decisions?",v:null},
+    {q:"What does accountability look like in your life — do you have it and want it?",v:null},
+    {q:"What does emotional health mean to you and how has faith shaped how you tend to it?",v:null},
+    {q:"How do you think about children — do you want them and how central is faith?",v:null},
+    {q:"What does integrity look like for you when no one is watching?",v:null},
+    {q:"What does loving someone well long-term mean — not in feeling but commitment?",v:'"Love is patient, love is kind." — 1 Corinthians 13:4'},
+    {q:"How much do you value solitude versus community — and how does that shape your rhythms?",v:null},
+    {q:"What does pursuing holiness actually look like — not as performance but desire?",v:null},
+    {q:"What does it mean to you to be a person of your word?",v:null},
+    {q:"How do you handle temptation — what structures protect you?",v:null},
+    {q:"What does honoring your parents look like — and how do you navigate it when complicated?",v:null},
+    {q:"What does rest mean to you as an act of trust in God — not just recovery?",v:'"He grants sleep to those he loves." — Psalm 127:2'},
+    {q:"What's a conviction you've held quietly that you've never been fully asked about?",v:null},
+    {q:"If your relationship were to honor God above everything, what would that actually require?",v:null},
+    {q:"What's something about modern Christian culture that you genuinely wrestle with?",v:null},
+    {q:"What does it look like when anxiety takes over — and how does faith show up?",v:null},
+    {q:"What's your posture toward church leadership, mentors, and spiritual authority?",v:null},
+    {q:"How do you approach serving others — naturally or something you have to be intentional about?",v:null},
+    {q:"What's a belief you hold that you think most people — even Christians — misunderstand?",v:null},
   ],
-  reveal: [
-    { q: "What's something you've had to surrender to God that was genuinely hard to let go of?", v: "\"Not my will, but yours be done.\" — Luke 22:42" },
-    { q: "What wound from your past has most shaped how you love people — and how has God met you there?", v: null },
-    { q: "What are you most afraid of in a committed relationship? Where does that fear come from?", v: "\"There is no fear in love.\" — 1 John 4:18" },
-    { q: "What does God still seem to be working on in your character — the thing you keep bringing back to him?", v: null },
-    { q: "Is there an area of your life where you've felt real tension between what you want and what God wants?", v: null },
-    { q: "What does spiritual partnership look like to you in a marriage — not theoretically, but how you'd actually want to live it?", v: null },
-    { q: "What legacy do you most want to leave — as a spouse, a potential parent, a person of faith?", v: "\"As for me and my house, we will serve the Lord.\" — Joshua 24:15" },
-    { q: "What's the most honest thing you've ever told God in prayer?", v: null },
-    { q: "If you could ask God one question about your future right now, what would it be?", v: null },
-    { q: "What part of your story do you feel most guarded about — and what would it take to feel safe enough to share it?", v: null },
-    { q: "What does vulnerability mean to you, and how does your faith shape your willingness to be truly known?", v: "\"Bear with one another in love.\" — Ephesians 4:2" },
-    { q: "When you imagine a God-honoring marriage, what feeling do you most hope to carry into every ordinary day?", v: "\"Two are better than one.\" — Ecclesiastes 4:9" },
-    { q: "What's the hardest season you've walked through — and what did it reveal about your faith?", v: null },
-    { q: "Is there a relationship from your past that shaped how you see love — for better or worse?", v: null },
-    { q: "What do you believe about yourself that you know God doesn't believe about you?", v: null },
-    { q: "What's something you've done that you've had a hard time forgiving yourself for?", v: null },
-    { q: "What's a version of yourself you're afraid of becoming — and what do you think protects you from it?", v: null },
-    { q: "What does it look like when you feel truly loved — and have you ever fully let someone love you that way?", v: null },
-    { q: "When was the last time you were genuinely broken before God — and what came out of it?", v: null },
-    { q: "What's a dream you've quietly let go of — and are you at peace with that?", v: null },
-    { q: "What does loneliness feel like for you — and how have you learned to sit with it?", v: null },
-    { q: "What's something you want in a partner that you're almost afraid to admit you actually need?", v: null },
-    { q: "What's a chapter of your story you've never fully told anyone?", v: null },
-    { q: "What would it mean to you to be fully known by someone — does that feel safe or terrifying?", v: null },
-    { q: "What's the most courageous thing you've ever done in obedience to God?", v: null },
-    { q: "What has this season of singleness taught you about yourself that you're genuinely grateful for?", v: null },
-    { q: "What does it look like when you're at your worst in a relationship — and what do you need in those moments?", v: null },
-    { q: "What do you think is the biggest lie you've believed about love — and where did it come from?", v: null },
-    { q: "When you feel spiritually dry, what do you usually do — and what do you wish you did instead?", v: null },
-    { q: "If the person across from you knew everything about you — every struggle, every failure, every fear — what do you most hope they'd still see?", v: null },
+  reveal:[
+    {q:"What's something you've had to surrender to God that was genuinely hard to let go of?",v:'"Not my will, but yours be done." — Luke 22:42'},
+    {q:"What wound from your past has most shaped how you love people?",v:null},
+    {q:"What are you most afraid of in a committed relationship? Where does that fear come from?",v:'"There is no fear in love." — 1 John 4:18'},
+    {q:"What does God still seem to be working on in your character?",v:null},
+    {q:"Is there an area where you've felt real tension between what you want and what God wants?",v:null},
+    {q:"What does spiritual partnership look like in a marriage — practically?",v:null},
+    {q:"What legacy do you most want to leave — as a spouse, parent, person of faith?",v:'"As for me and my house, we will serve the Lord." — Joshua 24:15'},
+    {q:"What's the most honest thing you've ever told God in prayer?",v:null},
+    {q:"If you could ask God one question about your future, what would it be?",v:null},
+    {q:"What part of your story do you feel most guarded about — and what would safety require?",v:null},
+    {q:"What does vulnerability mean to you and how does faith shape your willingness to be known?",v:'"Bear with one another in love." — Ephesians 4:2'},
+    {q:"When you imagine a God-honoring marriage, what feeling do you hope carries into every ordinary day?",v:'"Two are better than one." — Ecclesiastes 4:9'},
+    {q:"What's the hardest season you've walked through — what did it reveal about your faith?",v:null},
+    {q:"Is there a relationship from your past that shaped how you see love — for better or worse?",v:null},
+    {q:"What do you believe about yourself that you know God doesn't believe about you?",v:null},
+    {q:"What's something you've done that you've had a hard time forgiving yourself for?",v:null},
+    {q:"What does it look like when you feel truly loved — have you ever fully let someone love you?",v:null},
+    {q:"When was the last time you were genuinely broken before God — and what came out of it?",v:null},
+    {q:"What's a dream you've quietly let go of — and are you at peace with that?",v:null},
+    {q:"What does loneliness feel like for you — and how have you learned to sit with it?",v:null},
+    {q:"What's something you want in a partner you're almost afraid to admit you need?",v:null},
+    {q:"What's a chapter of your story you've never fully told anyone?",v:null},
+    {q:"What would it mean to be fully known by someone — safe or terrifying?",v:null},
+    {q:"What's the most courageous thing you've ever done in obedience to God?",v:null},
+    {q:"What has this season of singleness taught you that you're genuinely grateful for?",v:null},
+    {q:"What does it look like when you're at your worst in a relationship — and what do you need?",v:null},
+    {q:"What's the biggest lie you've believed about love — and where did it come from?",v:null},
+    {q:"When you feel spiritually dry, what do you usually do — and what do you wish you did?",v:null},
+    {q:"What's a version of yourself you're afraid of becoming — and what protects you from it?",v:null},
+    {q:"If the person across from you knew everything about you, what do you most hope they'd still see?",v:null},
   ],
-  howwelove: [
-    { q: "Which love style do you most identify with — Avoider, Pleaser, Vacillator, Controller, or Victim — and how has it shaped your closest relationships?", v: "\"Perfect love casts out fear.\" — 1 John 4:18" },
-    { q: "How was love modeled in your home growing up — and do you see those same patterns in how you love people today?", v: null },
-    { q: "Do you think your love style has changed over time? What caused the shift — and what still needs to change?", v: "\"Be transformed by the renewing of your mind.\" — Romans 12:2" },
-    { q: "What relational patterns do you notice repeating across different relationships in your life?", v: "\"Guard your heart, for everything you do flows from it.\" — Proverbs 4:23" },
-    { q: "What role did you play in your family — the peacekeeper, the caretaker, the one who acted out? How does that role still show up?", v: null },
-    { q: "What messages about love did you receive as a child — and are you still living by them, even if you don't want to be?", v: null },
-    { q: "When you feel emotionally hurt, what do you tend to do first — withdraw, fix, pursue, or shut down?", v: null },
-    { q: "What was the emotional climate of your home growing up — were feelings spoken openly, or avoided and minimized?", v: "\"You are fearfully and wonderfully made.\" — Psalm 139:14" },
-    { q: "How did your caregivers respond when you were sad or scared — and how did that shape what you expect from people now?", v: null },
-    { q: "What unmet emotional need from childhood do you recognize still showing up in your adult relationships?", v: "\"God comforts us so we can comfort others.\" — 2 Corinthians 1:3-4" },
-    { q: "What emotional triggers cause you to react in ways you later regret — and where do they really come from?", v: null },
-    { q: "What fear is most in the way of you becoming the partner you actually want to be?", v: "\"I can do all things through Christ who strengthens me.\" — Philippians 4:13" },
-    { q: "What negative pattern in yourself have you recognized but still haven't fully broken — and what would it take?", v: null },
-    { q: "What does a healthy, secure love actually look like to you — not in theory, but in an ordinary day?", v: null },
-    { q: "What relational skills were never modeled for you growing up that you're still learning now?", v: null },
-    { q: "How do you balance speaking the truth in love versus avoiding confrontation to keep the peace?", v: "\"A gentle answer turns away wrath.\" — Proverbs 15:1" },
-    { q: "When was the last time you felt truly heard by someone — and what made that moment different?", v: null },
-    { q: "What communication habit do you know you need to unlearn — and what keeps getting in the way?", v: "\"Be quick to listen, slow to speak.\" — James 1:19" },
-    { q: "What is your default response to conflict — fight, flight, or freeze — and where does that pattern come from?", v: "\"Blessed are the peacemakers.\" — Matthew 5:9" },
-    { q: "When has someone shown you genuine empathy at exactly the right moment — and what did it do for you?", v: "\"Mourn with those who mourn.\" — Romans 12:15" },
-    { q: "Who do you need to forgive — and what's really standing in the way?", v: "\"As far as the east is from the west.\" — Psalm 103:12" },
-    { q: "Why do you think forgiving yourself can sometimes feel harder than forgiving another person?", v: null },
-    { q: "Do you offer yourself the same grace and patience you give to others — honestly?", v: "\"No condemnation for those in Christ Jesus.\" — Romans 8:1" },
-    { q: "What negative belief about yourself do you most need to replace with what God actually says about you?", v: null },
-    { type: "wound", word: "Rejected",   def: "Feeling unwanted, dismissed, or cast aside.", q: "Has rejection shaped how you love — or how you hold back? When did you first feel this, and does it still affect you?", v: "\"I have loved you with an everlasting love.\" — Jeremiah 31:3" },
-    { type: "wound", word: "Invisible",  def: "Feeling unnoticed, unheard, or unrecognized.", q: "Have you ever felt invisible in a close relationship — like your presence didn't register? What did that do to the way you show up for people?", v: null },
-    { type: "wound", word: "Abandoned",  def: "Feeling left behind, emotionally or physically deserted.", q: "Does the fear of abandonment show up in your relationships? How does it change the way you love — or pull away?", v: "\"Even if my father and mother abandon me, the Lord holds me close.\" — Psalm 27:10" },
-    { type: "wound", word: "Unworthy",   def: "Feeling like you don't deserve love, success, or happiness.", q: "Have you ever sabotaged something good because part of you didn't believe you deserved it? What would it mean to finally believe you do?", v: null },
-    { type: "wound", word: "Defective",  def: "Feeling like something is fundamentally wrong with you.", q: "Is there something about yourself you've been afraid for someone to fully see — a part that feels broken or too much?", v: "\"You are fearfully and wonderfully made.\" — Psalm 139:14" },
-    { q: "What would it mean for your future relationship if you walked in as a Secure Connector — comfortable with emotions, trust, and honest boundaries?", v: "\"He who began a good work in you will carry it to completion.\" — Philippians 1:6" },
+  howwelove:[
+    {q:"Which love style do you most identify with — Avoider, Pleaser, Vacillator, Controller, or Victim?",v:'"Perfect love casts out fear." — 1 John 4:18'},
+    {q:"How was love modeled in your home — and do you see those patterns in how you love today?",v:null},
+    {q:"Do you think your love style has changed over time? What caused the shift?",v:'"Be transformed by the renewing of your mind." — Romans 12:2'},
+    {q:"What relational patterns do you notice repeating across different relationships?",v:'"Guard your heart, for everything flows from it." — Proverbs 4:23'},
+    {q:"What role did you play in your family — peacekeeper, caretaker, the one who acted out?",v:null},
+    {q:"What messages about love did you receive as a child — and are you still living by them?",v:null},
+    {q:"When emotionally hurt, what do you tend to do — withdraw, fix, pursue, or shut down?",v:null},
+    {q:"What was the emotional climate of your home growing up?",v:'"You are fearfully and wonderfully made." — Psalm 139:14'},
+    {q:"How did your caregivers respond when you were sad or scared?",v:null},
+    {q:"What unmet emotional need from childhood still shows up in your adult relationships?",v:'"God comforts us so we can comfort others." — 2 Corinthians 1:3-4'},
+    {q:"What emotional triggers cause you to react in ways you later regret?",v:null},
+    {q:"What fear is most in the way of you becoming the partner you actually want to be?",v:'"I can do all things through Christ." — Philippians 4:13'},
+    {q:"What negative pattern have you recognized but still not fully broken?",v:null},
+    {q:"What does a healthy, secure love actually look like to you — not in theory?",v:null},
+    {q:"What relational skills were never modeled for you that you're still learning?",v:null},
+    {q:"How do you balance speaking truth in love versus avoiding confrontation?",v:'"A gentle answer turns away wrath." — Proverbs 15:1'},
+    {q:"When was the last time you felt truly heard — and what made that moment different?",v:null},
+    {q:"What communication habit do you know you need to unlearn?",v:'"Be quick to listen, slow to speak." — James 1:19'},
+    {q:"What is your default response to conflict — fight, flight, or freeze?",v:'"Blessed are the peacemakers." — Matthew 5:9'},
+    {q:"When has someone shown you genuine empathy at exactly the right moment?",v:'"Mourn with those who mourn." — Romans 12:15'},
+    {q:"Who do you need to forgive — and what's really standing in the way?",v:'"As far as the east is from the west." — Psalm 103:12'},
+    {q:"Why do you think forgiving yourself can feel harder than forgiving someone else?",v:null},
+    {q:"Do you offer yourself the same grace and patience you give to others?",v:'"No condemnation for those in Christ Jesus." — Romans 8:1'},
+    {q:"What negative belief about yourself most needs to be replaced with what God says?",v:null},
+    {type:"wound",word:"Rejected",def:"Feeling unwanted, dismissed, or cast aside.",q:"Has rejection shaped how you love — or how you hold back?",v:'"I have loved you with an everlasting love." — Jeremiah 31:3'},
+    {type:"wound",word:"Invisible",def:"Feeling unnoticed, unheard, or unrecognized.",q:"Have you ever felt invisible in a close relationship — and what did that do to you?",v:null},
+    {type:"wound",word:"Abandoned",def:"Feeling left behind, emotionally or physically deserted.",q:"Does the fear of abandonment show up in your relationships? How does it change the way you love?",v:'"The Lord holds me close." — Psalm 27:10'},
+    {type:"wound",word:"Unworthy",def:"Feeling like you don't deserve love, success, or happiness.",q:"Have you ever sabotaged something good because you didn't believe you deserved it?",v:null},
+    {type:"wound",word:"Defective",def:"Feeling like something is fundamentally wrong with you.",q:"Is there something about yourself you've been afraid for someone to fully see?",v:'"You are fearfully and wonderfully made." — Psalm 139:14'},
+    {q:"What would it mean to walk into a relationship as a Secure Connector?",v:'"He who began a good work in you will carry it on." — Philippians 1:6'},
   ],
-  wild: [
-    { q: "Share a scripture that's been speaking to you lately — and why it found you right now.", v: null },
-    { q: "Tell them something about your faith journey you rarely share out loud.", v: null },
-    { q: "What's a prayer you keep returning to — and what does it reveal about what you need most?", v: null },
-    { q: "Describe your ideal Sunday together as a couple, from morning to evening.", v: null },
-    { q: "What's something God has shown you through a hard season that you now see as a gift?", v: null },
-    { q: "What's one thing you hope someone falls in love with about your faith, not just your personality?", v: null },
-    { q: "Share a verse that's carried you recently and tell them what it means to you right now.", v: null },
-    { q: "Tell them about a moment God showed up in a way you still can't fully explain.", v: null },
-    { q: "What's something you want to pray about together — right now, out loud?", v: null },
-    { q: "What does your relationship with the Holy Spirit actually feel like in your daily life?", v: null },
-    { q: "What's a worship song that's moved you deeply — and what line gets you every time?", v: null },
-    { q: "What's a promise from God you're still holding onto even when it's hard to see?", v: null },
-    { q: "Tell them about a mentor or spiritual figure who changed the trajectory of your faith.", v: null },
-    { q: "What's something you feel God is specifically calling you toward that you haven't fully stepped into yet?", v: null },
-    { q: "What does 'God is enough' actually feel like in your lived experience — not just as theology?", v: null },
-    { q: "If you could pray one specific prayer over the person across from you right now, what would it be?", v: null },
-    { q: "What's the most unexpected place or moment God has ever spoken to you?", v: null },
-    { q: "What's a book or chapter of the Bible you keep returning to — and why does it keep finding you?", v: null },
-    { q: "What does it look like when you actually encounter God — not just go through the motions?", v: null },
-    { q: "What's something you believe about God that has cost you something to keep holding onto?", v: null },
-    { q: "Tell them about a time your faith was tested and you held on — or a time you had to find your way back.", v: null },
-    { q: "What does repentance actually feel like for you — is it hard, freeing, or both?", v: null },
-    { q: "What's something you've been asking God for that you haven't told many people about?", v: null },
-    { q: "If you could write a letter to a younger version of yourself about faith and love, what's the one thing you'd make sure they knew?", v: null },
-    { q: "What's a moment of answered prayer that still moves you when you think about it?", v: null },
-    { q: "What's something you genuinely love about the Church — despite all its mess?", v: null },
-    { q: "What does submission to God actually require of you right now — and are you doing it?", v: null },
-    { q: "What would it look like for your relationship to glorify God — not as a standard to perform, but as a natural fruit?", v: null },
-    { q: "What's something you've never been asked about your faith that you've always wished someone would ask?", v: null },
-    { q: "Close your eyes for a moment. What do you most want to ask God about the two of you right now?", v: null },
+  wild:[
+    {q:"Share a scripture that's been speaking to you lately — and why it found you right now.",v:null},
+    {q:"Tell them something about your faith journey you rarely share out loud.",v:null},
+    {q:"What's a prayer you keep returning to — and what does it reveal about what you need most?",v:null},
+    {q:"Describe your ideal Sunday together as a couple, from morning to evening.",v:null},
+    {q:"What's something God has shown you through a hard season that you now see as a gift?",v:null},
+    {q:"What's one thing you hope someone falls in love with about your faith, not just your personality?",v:null},
+    {q:"Share a verse that's carried you recently and tell them what it means to you right now.",v:null},
+    {q:"Tell them about a moment God showed up in a way you still can't fully explain.",v:null},
+    {q:"What's something you want to pray about together — right now, out loud?",v:null},
+    {q:"What does your relationship with the Holy Spirit actually feel like in your daily life?",v:null},
+    {q:"What's a worship song that's moved you deeply — and what line gets you every time?",v:null},
+    {q:"What's a promise from God you're still holding onto even when it's hard to see?",v:null},
+    {q:"Tell them about a mentor or spiritual figure who changed the trajectory of your faith.",v:null},
+    {q:"What's something you feel God is calling you toward that you haven't fully stepped into?",v:null},
+    {q:"What does 'God is enough' actually feel like in your lived experience?",v:null},
+    {q:"If you could pray one prayer over the person across from you right now, what would it be?",v:null},
+    {q:"What's the most unexpected place or moment God has ever spoken to you?",v:null},
+    {q:"What's a chapter of the Bible you keep returning to — and why?",v:null},
+    {q:"What does it look like when you actually encounter God — not just go through the motions?",v:null},
+    {q:"What's something you believe about God that has cost you something to hold onto?",v:null},
+    {q:"Tell them about a time your faith was tested and you held on — or had to find your way back.",v:null},
+    {q:"What does repentance actually feel like for you — hard, freeing, or both?",v:null},
+    {q:"What's something you've been asking God for that you haven't told many people about?",v:null},
+    {q:"If you could write a letter to a younger you about faith and love, what would you say?",v:null},
+    {q:"What's a moment of answered prayer that still moves you?",v:null},
+    {q:"What's something you genuinely love about the Church — despite all its mess?",v:null},
+    {q:"What does submission to God actually require of you right now?",v:null},
+    {q:"What would it look like for your relationship to glorify God — not as performance but as fruit?",v:null},
+    {q:"What's something you've never been asked about your faith that you've always wished someone would?",v:null},
+    {q:"Close your eyes. What do you most want to ask God about the two of you right now?",v:null},
   ],
 };
-
-const STYLE_COLORS = { "Anxious": "#D4845A", "Avoidant": "#6A8FAF", "Disorganized": "#9E6B8E", "Secure": "#5A9E7A" };
-
-CARDS.attachment = [
-  { type: "style", style: "Anxious",      desc: "Craves closeness but fears abandonment. Hypervigilant to relationship signals. Often needs reassurance to feel secure.", q: "Do you recognize anxious patterns in yourself — the need for reassurance, the fear that people will leave? Where did that first begin?", v: null },
-  { type: "style", style: "Anxious",      desc: "Tends to read neutral situations as threatening. Can become overwhelmed when the attachment system is triggered.", q: "What does being triggered in a relationship feel like for you — and what does it make you want to do?", v: null },
-  { type: "style", style: "Avoidant",     desc: "Values independence over emotional intimacy. Learned early to suppress emotional needs. Keeps relationships surface-level as a survival mechanism.", q: "Is there a version of you that keeps people at arm's length — and do you know why that wall went up?", v: null },
-  { type: "style", style: "Avoidant",     desc: "Self-sufficiency rooted in early perceived rejection. Emotional unavailability isn't indifference — it's a learned adaptation.", q: "What would it mean for you to actually need someone — and does that feel safe or threatening?", v: null },
-  { type: "style", style: "Disorganized", desc: "Wants deep connection but fears it at the same time. Often rooted in experiences where the caregiver was also the source of fear.", q: "Have you ever pulled someone close and then immediately felt the need to push them away — what do you think was happening?", v: null },
-  { type: "style", style: "Disorganized", desc: "A push-pull between needing love and being terrified of it. Often shaped by unresolved early trauma.", q: "Is there a part of you that deeply wants to be loved, and another part that doesn't believe it's safe? How do those two parts fight in you?", v: null },
-  { type: "style", style: "Secure",       desc: "Comfortable with both intimacy and independence. Able to trust, set boundaries, navigate conflict, and stay emotionally available.", q: "What does a securely attached version of you look like — and what's the distance between that person and where you are now?", v: null },
-  { type: "style", style: "Secure",       desc: "Secure attachment isn't the absence of wounds — it's having done enough healing to love without fear constantly driving the relationship.", q: "What would it actually take for you to feel genuinely secure in love — not perfectly, but enough?", v: "\"Perfect love casts out fear.\" — 1 John 4:18" },
-  { q: "What's an early memory that may have shaped how you feel about love and closeness — even a small one that still lives in your body?", v: null },
-  { q: "What did your caregivers do when you were upset or scared as a child — and how did their response shape what you expect from people now?", v: null },
-  { q: "What was something you needed as a child that you rarely got — and do you still find yourself needing it in relationships today?", v: null },
-  { q: "Did you grow up with consistent love, or did affection feel unpredictable? How does that unpredictability show up now?", v: null },
-  { q: "What role did you play in your family's emotional ecosystem — the caretaker, the invisible one, the one who held it together?", v: null },
-  { q: "What situations in a relationship tend to trigger the most intense reactions in you — ones that feel bigger than what actually happened?", v: null },
-  { q: "When your attachment system gets activated — when you feel rejected, abandoned, or suffocated — what do you typically do first?", v: null },
-  { q: "Have you ever pushed someone away before they could leave — and afterward wondered if they actually would have?", v: null },
-  { q: "What's a relationship pattern that keeps repeating in your life? What story about yourself might be quietly driving it?", v: null },
-  { q: "Complete this sentence honestly: 'The thing I most struggle to believe about myself is…'", v: null },
-  { q: "What's a belief about yourself you formed in childhood that you're not fully sure is actually true?", v: "\"You are fearfully and wonderfully made.\" — Psalm 139:14" },
-  { q: "What personality traits do you think developed directly from the way you were loved — or not loved — as a child?", v: null },
-  { q: "What's something your attachment style actually makes you good at — a strength that came from having to adapt early?", v: null },
-  { q: "What do you most need from a partner to feel emotionally safe — and have you ever clearly asked for it?", v: null },
-  { q: "What does intimacy feel like for you at its best — and what makes it feel unsafe?", v: null },
-  { q: "When you feel your emotional needs rising in a relationship, what's your first instinct — and is that instinct usually helping or hurting you?", v: null },
-  { q: "What does 'secure love' actually feel like — have you ever experienced it, even briefly, and what did it feel like in your body?", v: null },
-  { q: "What's one thing you've learned about yourself through a painful relationship that you're actually grateful for?", v: "\"He who began a good work in you will carry it to completion.\" — Philippians 1:6" },
-  { q: "What would it mean to love from a secure place — not from fear of losing someone, but from the freedom of already being whole?", v: null },
-  { q: "How has understanding your attachment style changed the way you see your past relationships — the people you chose, the patterns you repeated?", v: null },
-  { q: "What's the difference between needing someone healthily and being anxiously attached — and do you know where that line is for you?", v: null },
-  { q: "What would a relationship look like if both people came into it having done real work on their attachment wounds?", v: "\"Two are better than one.\" — Ecclesiastes 4:9" },
+const SC={Anxious:"#D4845A",Avoidant:"#6A8FAF",Disorganized:"#9E6B8E",Secure:"#5A9E7A"};
+CARDS.attachment=[
+  {type:"style",style:"Anxious",desc:"Craves closeness but fears abandonment. Hypervigilant to relationship signals.",q:"Do you recognize anxious patterns — the need for reassurance, the fear people will leave?",v:null},
+  {type:"style",style:"Anxious",desc:"Tends to read neutral situations as threatening. Can become overwhelmed when triggered.",q:"What does being triggered in a relationship feel like — and what does it make you want to do?",v:null},
+  {type:"style",style:"Avoidant",desc:"Values independence over emotional intimacy. Learned early to suppress emotional needs.",q:"Is there a version of you that keeps people at arm's length — and why did that wall go up?",v:null},
+  {type:"style",style:"Avoidant",desc:"Self-sufficiency rooted in early perceived rejection. Emotional unavailability is a learned adaptation.",q:"What would it mean for you to actually need someone — does that feel safe or threatening?",v:null},
+  {type:"style",style:"Disorganized",desc:"Wants deep connection but fears it. Often rooted in experiences where the caregiver was the source of fear.",q:"Have you ever pulled someone close and immediately felt the need to push them away?",v:null},
+  {type:"style",style:"Disorganized",desc:"A push-pull between needing love and being terrified of it. Often shaped by unresolved trauma.",q:"Is there a part of you that wants to be loved, and another part that doesn't believe it's safe?",v:null},
+  {type:"style",style:"Secure",desc:"Comfortable with both intimacy and independence. Able to trust, set limits, and stay available.",q:"What does a securely attached version of you look like — and what's the gap from where you are now?",v:null},
+  {type:"style",style:"Secure",desc:"Secure attachment isn't the absence of wounds — it's having done enough healing to love without fear driving everything.",q:"What would it actually take to feel genuinely secure in love — not perfectly, but enough?",v:'"Perfect love casts out fear." — 1 John 4:18'},
+  {q:"What's an early memory that shaped how you feel about love and closeness?",v:null},
+  {q:"What did your caregivers do when you were upset — and how did that shape what you expect from people now?",v:null},
+  {q:"What did you need as a child that you rarely got — and do you still find yourself needing it?",v:null},
+  {q:"Did you grow up with consistent love, or did affection feel unpredictable? How does that show up now?",v:null},
+  {q:"What role did you play in your family's emotional ecosystem?",v:null},
+  {q:"What situations trigger the most intense reactions in you — bigger than what actually happened?",v:null},
+  {q:"When your attachment system activates — rejected, abandoned, suffocated — what do you do first?",v:null},
+  {q:"Have you ever pushed someone away before they could leave — and wondered if they would have?",v:null},
+  {q:"What's a relationship pattern that keeps repeating? What story about yourself might be driving it?",v:null},
+  {q:"Complete this honestly: The thing I most struggle to believe about myself is…",v:null},
+  {q:"What's a belief about yourself you formed in childhood that you're not sure is actually true?",v:'"You are fearfully and wonderfully made." — Psalm 139:14'},
+  {q:"What personality traits developed directly from the way you were loved — or not loved — as a child?",v:null},
+  {q:"What does your attachment style make you genuinely good at — a strength from adapting?",v:null},
+  {q:"What do you most need from a partner to feel emotionally safe — and have you ever asked?",v:null},
+  {q:"What does intimacy feel like at its best — and what makes it feel unsafe?",v:null},
+  {q:"When your emotional needs rise in a relationship, what's your first instinct — helping or hurting?",v:null},
+  {q:"What does secure love actually feel like — have you ever experienced it, even briefly?",v:null},
+  {q:"What's one thing you've learned through a painful relationship that you're grateful for?",v:'"He who began a good work in you will carry it on." — Philippians 1:6'},
+  {q:"What would it mean to love from a secure place — not from fear, but from freedom?",v:null},
+  {q:"How has understanding your attachment style changed how you see your past relationships?",v:null},
+  {q:"What's the difference between needing someone healthily and being anxiously attached?",v:null},
+  {q:"What would a relationship look like if both people came in having done real work on their wounds?",v:'"Two are better than one." — Ecclesiastes 4:9'},
 ];
-
-const LEVELS = [
-  { id: "discover",   label: "Discover",          num: "01", tagline: "Who are you, really?",                 desc: "Light, warm, and curious. Get past the surface and find out who this person actually is.", color: "#C9A84C", bg: "#12100a" },
-  { id: "deepen",     label: "Deepen",             num: "02", tagline: "What do you actually believe?",        desc: "Faith, values, and the things that matter most. The questions that reveal true compatibility.", color: "#8B5A8E", bg: "#0d0a12" },
-  { id: "reveal",     label: "Reveal",             num: "03", tagline: "Let yourself be known.",               desc: "Vulnerability, wounds, and what you're building toward. This is where real connection begins.", color: "#A85050", bg: "#130909" },
-  { id: "howwelove",  label: "How We Love",        num: "04", tagline: "Where did you learn to love?",         desc: "Love styles, attachment wounds, and childhood patterns still shaping how you connect.", color: "#B5647A", bg: "#120810" },
-  { id: "attachment", label: "Attachment Styles",  num: "05", tagline: "How you love is how you were loved.",  desc: "Anxious, Avoidant, Disorganized, and Secure — explore the four attachment styles and what they reveal.", color: "#6B8EC4", bg: "#080c14" },
-  { id: "wild",       label: "Wild",               num: "✦",  tagline: "Draw one. Trust it.",                  desc: "Prayer, scripture, and moments that can change everything. Draw whenever the Spirit moves you.", color: "#4A9E8E", bg: "#060f0e" },
+const LEVELS=[
+  {id:"discover",label:"Discover",num:"01",tagline:"Who are you, really?",desc:"Light and curious. Get past the surface.",color:"#C9A84C",bg:"#12100a"},
+  {id:"deepen",label:"Deepen",num:"02",tagline:"What do you actually believe?",desc:"Faith, values, and true compatibility.",color:"#8B5A8E",bg:"#0d0a12"},
+  {id:"reveal",label:"Reveal",num:"03",tagline:"Let yourself be known.",desc:"Vulnerability, wounds, and what you're building toward.",color:"#A85050",bg:"#130909"},
+  {id:"howwelove",label:"How We Love",num:"04",tagline:"Where did you learn to love?",desc:"Love styles, wounds, and childhood patterns.",color:"#B5647A",bg:"#120810"},
+  {id:"attachment",label:"Attachment Styles",num:"05",tagline:"How you love is how you were loved.",desc:"Anxious, Avoidant, Disorganized, and Secure.",color:"#6B8EC4",bg:"#080c14"},
+  {id:"wild",label:"Wild",num:"✦",tagline:"Draw one. Trust it.",desc:"Prayer, scripture, moments that can change everything.",color:"#4A9E8E",bg:"#060f0e"},
 ];
+const PC="#7eb8d4",PBG="#070c10";
 
-const PC  = "#7eb8d4";
-const PBG = "#070c10";
-const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+/* ── UI primitives ── */
+function Shell({bg="#0e0906",children}){return(
+  <div style={{minHeight:"100vh",background:bg,transition:"background .9s",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 16px",fontFamily:"Georgia,serif",position:"relative",overflow:"hidden"}}>
+    <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,opacity:.45,backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E")`}}/>
+    <div style={{position:"relative",zIndex:1,width:"100%",display:"flex",flexDirection:"column",alignItems:"center"}}>{children}</div>
+  </div>
+);}
+const OL=({c="#C9A84C",children})=><div style={{fontSize:11,letterSpacing:".3em",color:c,textTransform:"uppercase",marginBottom:14,fontFamily:"sans-serif",opacity:.9}}>{children}</div>;
+const BB=({go,label="← Back"})=><button onClick={go} style={{background:"none",border:"none",color:"#9a8f82",cursor:"pointer",fontSize:11,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",padding:0,marginBottom:28}}>{label}</button>;
+const PB=({go,children,off,style:s={}})=><button onClick={go} disabled={off} style={{border:"none",borderRadius:4,cursor:off?"not-allowed":"pointer",fontFamily:"sans-serif",fontWeight:700,letterSpacing:".13em",textTransform:"uppercase",transition:"opacity .2s",padding:"15px 36px",fontSize:13,...s}} onMouseOver={e=>{if(!off)e.currentTarget.style.opacity=".85"}} onMouseOut={e=>{e.currentTarget.style.opacity="1"}}>{children}</button>;
+const GB=({go,children,style:s={}})=><button onClick={go} style={{background:"none",border:"1px solid #4a3e32",borderRadius:4,color:"#a89880",padding:"13px 28px",fontSize:12,fontWeight:700,letterSpacing:".13em",textTransform:"uppercase",cursor:"pointer",fontFamily:"sans-serif",...s}} onMouseOver={e=>{e.currentTarget.style.borderColor="#7a6e60";e.currentTarget.style.color="#c8b89a"}} onMouseOut={e=>{e.currentTarget.style.borderColor="#4a3e32";e.currentTarget.style.color="#a89880"}}>{children}</button>;
+const Inp=({val,set,ph,style:s={}})=><input value={val} onChange={e=>set(e.target.value)} placeholder={ph} style={{display:"block",width:"100%",background:"rgba(255,255,255,.04)",border:"1px solid #3a2e22",borderRadius:6,padding:"14px 18px",color:"#F5EFE4",fontSize:15,outline:"none",boxSizing:"border-box",...s}}/>;
 
-/* ── Shared UI ───────────────────────────────────────────────────────────── */
-function Shell({ bg, children }) {
-  return (
-    <div style={{ minHeight:"100vh", background:bg, transition:"background 0.9s ease", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"28px 16px", fontFamily:"Georgia,serif", position:"relative", overflow:"hidden" }}>
-      <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, opacity:0.45, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E")` }} />
-      <div style={{ position:"relative", zIndex:1, width:"100%", display:"flex", flexDirection:"column", alignItems:"center" }}>{children}</div>
+function Toast({msg}){return msg?<div style={{position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",background:"#2a2018",border:"1px solid #4a3e32",borderRadius:20,padding:"10px 22px",color:"#c8b89a",fontSize:12,fontFamily:"sans-serif",zIndex:99,whiteSpace:"nowrap",animation:"fadeUp .3s"}}>{msg}</div>:null;}
+
+/* ── Card renderer ── */
+function CardFace({card,color}){
+  if(!card)return null;
+  if(card.type==="wound")return(
+    <div style={{animation:"fadeUp .35s",width:"100%"}}>
+      <div style={{fontSize:"clamp(1.5rem,5vw,1.9rem)",color,fontWeight:400,marginBottom:8}}>{card.word}</div>
+      <div style={{color:"#9a8f82",fontSize:12,fontFamily:"sans-serif",lineHeight:1.6,marginBottom:18,fontStyle:"italic"}}>{card.def}</div>
+      <div style={{height:1,background:`${color}25`,marginBottom:18}}/>
+      <p style={{color:"#F5EFE4",fontSize:"clamp(1rem,3vw,1.12rem)",lineHeight:1.72,margin:0,fontStyle:"italic"}}>{card.q}</p>
+      {card.v&&<p style={{color,fontSize:11,marginTop:20,opacity:.65,fontFamily:"sans-serif",lineHeight:1.6}}>{card.v}</p>}
+    </div>
+  );
+  if(card.type==="style")return(
+    <div style={{animation:"fadeUp .35s",width:"100%"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",marginBottom:10}}>
+        <span style={{background:`${SC[card.style]}22`,border:`1px solid ${SC[card.style]}55`,borderRadius:20,padding:"4px 14px",fontSize:12,color:SC[card.style],fontFamily:"sans-serif",fontWeight:700,letterSpacing:".1em",textTransform:"uppercase"}}>{card.style}</span>
+      </div>
+      <div style={{color:"#9a8f82",fontSize:12,fontFamily:"sans-serif",lineHeight:1.65,marginBottom:18,fontStyle:"italic",textAlign:"center"}}>{card.desc}</div>
+      <div style={{height:1,background:`${SC[card.style]}25`,marginBottom:18}}/>
+      <p style={{color:"#F5EFE4",fontSize:"clamp(1rem,3vw,1.12rem)",lineHeight:1.72,margin:0,fontStyle:"italic"}}>{card.q}</p>
+      {card.v&&<p style={{color:SC[card.style],fontSize:11,marginTop:20,opacity:.65,fontFamily:"sans-serif",lineHeight:1.6}}>{card.v}</p>}
+    </div>
+  );
+  return(
+    <div style={{animation:"fadeUp .35s"}}>
+      <p style={{color:"#F5EFE4",fontSize:"clamp(1.05rem,3.2vw,1.2rem)",lineHeight:1.72,margin:0,fontStyle:"italic"}}>{card.q}</p>
+      {card.v&&<p style={{color,fontSize:11,marginTop:24,opacity:.7,fontFamily:"sans-serif",lineHeight:1.6}}>{card.v}</p>}
     </div>
   );
 }
-const Overline = ({ children, color="#C9A84C" }) => (
-  <div style={{ fontSize:11, letterSpacing:"0.3em", color, textTransform:"uppercase", marginBottom:14, fontFamily:"sans-serif", opacity:0.9 }}>{children}</div>
-);
-const BackBtn = ({ onClick }) => (
-  <button onClick={onClick} style={{ background:"none", border:"none", color:"#9a8f82", cursor:"pointer", fontSize:11, letterSpacing:"0.15em", textTransform:"uppercase", fontFamily:"sans-serif", padding:0, marginBottom:28, display:"flex", alignItems:"center", gap:6 }}>← Back</button>
-);
-const PrimaryBtn = ({ onClick, children, disabled, style={} }) => (
-  <button onClick={onClick} disabled={disabled} style={{ border:"none", borderRadius:4, cursor:disabled?"not-allowed":"pointer", fontFamily:"sans-serif", fontWeight:700, letterSpacing:"0.13em", textTransform:"uppercase", transition:"opacity 0.2s", padding:"15px 36px", fontSize:13, ...style }}
-    onMouseOver={e=>{ if(!disabled) e.currentTarget.style.opacity="0.85"; }}
-    onMouseOut={e=>{ e.currentTarget.style.opacity="1"; }}
-  >{children}</button>
-);
-const GhostBtn = ({ onClick, children, style={} }) => (
-  <button onClick={onClick} style={{ background:"none", border:"1px solid #4a3e32", borderRadius:4, color:"#a89880", padding:"13px 28px", fontSize:12, fontWeight:700, letterSpacing:"0.13em", textTransform:"uppercase", cursor:"pointer", fontFamily:"sans-serif", transition:"border-color 0.2s,color 0.2s", ...style }}
-    onMouseOver={e=>{ e.currentTarget.style.borderColor="#7a6e60"; e.currentTarget.style.color="#c8b89a"; }}
-    onMouseOut={e=>{ e.currentTarget.style.borderColor="#4a3e32"; e.currentTarget.style.color="#a89880"; }}
-  >{children}</button>
-);
 
-/* ── App ─────────────────────────────────────────────────────────────────── */
-function App() {
-  const [screen, setScreen]     = useState("home");
-  const [mode, setMode]         = useState("solo");
-  const [names, setNames]       = useState(["",""]);
-  const [levelId, setLevelId]   = useState(null);
-  const [isPrayer, setIsPrayer] = useState(false);
-  const [deck, setDeck]         = useState([]);
-  const [idx, setIdx]           = useState(0);
-  const [flipped, setFlipped]   = useState(false);
-  const [prayTurn, setPrayTurn] = useState(0);
-  const [turn, setTurn]         = useState(0);
-  const [exiting, setExiting]   = useState(false);
-  const [favs, setFavs]         = useState(() => loadFavs());
-  const [editingNote, setEditingNote] = useState(null);
-  const [toast, setToast]       = useState("");
+/* ══════════════════════════════════
+   APP
+══════════════════════════════════ */
+function App(){
+  /* ── solo state ── */
+  const[sc,setSc]=useState("home");
+  const[mode,setMode]=useState("solo");
+  const[names,setNames]=useState(["",""]);
+  const[lid,setLid]=useState(null);
+  const[pray,setPray]=useState(false);
+  const[deck,setDeck]=useState([]);
+  const[idx,setIdx]=useState(0);
+  const[flip,setFlip]=useState(false);
+  const[pt,setPt]=useState(0);
+  const[turn,setTurn]=useState(0);
+  const[exit,setExit]=useState(false);
+  const[favs,setFavs]=useState(()=>lsGet("kl_favs",[]));
+  const[enote,setEnote]=useState(null);
+  const[toast,setToast]=useState("");
 
-  const level     = LEVELS.find(l => l.id === levelId);
-  const card      = deck[idx];
-  const p1        = names[0].trim() || "Person 1";
-  const p2        = names[1].trim() || "Person 2";
-  const cardColor = isPrayer ? PC : (level?.color || "#C9A84C");
-  const cardBg    = isPrayer ? PBG : (level?.bg || "#0e0906");
-  const couplesAndPrayer = mode === "couples" && isPrayer;
-  const isWound   = card?.type === "wound";
-  const isStyle   = card?.type === "style";
+  /* ── live session state ── */
+  const[sid,setSid]=useState(null);
+  const[code,setCode]=useState("");
+  const[host,setHost]=useState(false);
+  const[myNm,setMyNm]=useState("");
+  const[pNm,setPNm]=useState("");
+  const[lIdx,setLIdx]=useState(0);
+  const[lRev,setLRev]=useState(false);
+  const[lDeck,setLDeck]=useState([]);
+  const[lLid,setLLid]=useState("discover");
+  const[myAns,setMyAns]=useState("");
+  const[pAns,setPAns]=useState("");
+  const[allAns,setAllAns]=useState([]);
+  const[sessions,setSessions]=useState(()=>lsGet("kl_sess",[]));
+  const[vSess,setVSess]=useState(null);
+  const[jCode,setJCode]=useState("");
+  const[cName,setCName]=useState("");
+  const[jName,setJName]=useState("");
+  const[cLvl,setCLvl]=useState("discover");
+  const[busy,setBusy]=useState(false);
+  const[sErr,setSErr]=useState("");
+  const[pOn,setPOn]=useState(false);
 
-  const showToast = msg => { setToast(msg); setTimeout(() => setToast(""), 2200); };
+  const saveT=useRef(null);
+  const sRef=useRef(null);
+  const aRef=useRef(null);
 
-  const isFav    = c => c && favs.some(f => f.q === c.q);
-  const toggleFav = c => {
-    const next = isFav(c) ? favs.filter(f => f.q !== c.q) : [...favs, { ...c, levelId: isPrayer ? "wild" : levelId, note: "" }];
-    setFavs(next); saveFavs(next);
+  const shToast=m=>{setToast(m);setTimeout(()=>setToast(""),2500)};
+
+  /* ── Supabase subscriptions ── */
+  useEffect(()=>{
+    if(!sid)return;
+    sRef.current=SB.channel("s-"+sid)
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"sessions",filter:`id=eq.${sid}`},({new:s})=>{
+        if(s.guest_name&&host)setPNm(s.guest_name);
+        if(s.guest_name)setPOn(true);
+        setLIdx(s.current_idx);
+        setLRev(s.revealed);
+        if(s.status==="active"&&sc==="waiting")setSc("live");
+        if(s.status==="complete"){fetchAns(sid);setSc("lend");}
+      })
+      .subscribe();
+    aRef.current=SB.channel("a-"+sid)
+      .on("postgres_changes",{event:"*",schema:"public",table:"answers",filter:`session_id=eq.${sid}`},({new:a})=>{
+        if((host&&!a.is_host)||(!host&&a.is_host))setPAns(a.answer||"");
+        setAllAns(p=>{const i=p.findIndex(x=>x.card_idx===a.card_idx&&x.is_host===a.is_host);if(i>=0){const n=[...p];n[i]=a;return n;}return[...p,a];});
+      })
+      .subscribe();
+    return()=>{
+      if(sRef.current)SB.removeChannel(sRef.current);
+      if(aRef.current)SB.removeChannel(aRef.current);
+    };
+  },[sid]);
+
+  /* debounced answer save */
+  useEffect(()=>{
+    if(!sid)return;
+    if(saveT.current)clearTimeout(saveT.current);
+    saveT.current=setTimeout(async()=>{
+      const c=lDeck[lIdx];if(!c)return;
+      await SB.from("answers").upsert({session_id:sid,card_idx:lIdx,card_question:c.q,is_host:host,player_name:myNm,answer:myAns,updated_at:new Date().toISOString()},{onConflict:"session_id,card_idx,is_host"});
+    },800);
+    return()=>{if(saveT.current)clearTimeout(saveT.current)};
+  },[myAns]);
+
+  /* load answers when card changes */
+  useEffect(()=>{
+    if(!sid)return;
+    setMyAns("");setPAns("");
+    SB.from("answers").select("*").eq("session_id",sid).eq("card_idx",lIdx).then(({data})=>{
+      if(!data)return;
+      data.forEach(a=>{if(a.is_host===host)setMyAns(a.answer||"");else setPAns(a.answer||"");});
+    });
+  },[lIdx,sid]);
+
+  const fetchAns=async(s)=>{const{data}=await SB.from("answers").select("*").eq("session_id",s).order("card_idx");if(data)setAllAns(data);};
+
+  /* ── session actions ── */
+  const createSess=async()=>{
+    setBusy(true);setSErr("");
+    try{
+      const c=genCode();
+      const{data,error}=await SB.from("sessions").insert({room_code:c,level_id:cLvl,current_idx:0,revealed:false,host_name:cName||"Anthony",status:"waiting"}).select().single();
+      if(error)throw error;
+      setSid(data.id);setCode(c);setHost(true);setMyNm(cName||"Anthony");
+      setLLid(cLvl);setLDeck(seeded(CARDS[cLvl],c));setLIdx(0);setLRev(false);setSc("waiting");
+    }catch(e){setSErr("Could not create. Try again.");}
+    setBusy(false);
   };
-  const updateNote = (i, note) => {
-    const next = favs.map((f, j) => j === i ? { ...f, note } : f);
-    setFavs(next); saveFavs(next);
+
+  const joinSess=async()=>{
+    setBusy(true);setSErr("");
+    const c=jCode.toUpperCase().trim();
+    try{
+      const{data:sess,error:fe}=await SB.from("sessions").select("*").eq("room_code",c).eq("status","waiting").single();
+      if(fe||!sess)throw new Error("Session not found. Check the code.");
+      const{data,error}=await SB.from("sessions").update({guest_name:jName||"Guest",status:"active"}).eq("id",sess.id).select().single();
+      if(error)throw error;
+      setSid(data.id);setCode(c);setHost(false);setMyNm(jName||"Guest");setPNm(data.host_name);
+      setLLid(data.level_id);setLDeck(seeded(CARDS[data.level_id],c));
+      setLIdx(data.current_idx);setLRev(data.revealed);setPOn(true);setSc("live");
+    }catch(e){setSErr(e.message||"Could not join.");}
+    setBusy(false);
   };
 
-  const startGame = (lid, prayer=false) => {
-    setLevelId(lid); setIsPrayer(prayer);
-    setDeck(shuffle(prayer ? CARDS.wild : CARDS[lid]));
-    setIdx(0); setFlipped(false); setTurn(0); setPrayTurn(0); setScreen("game");
+  const revCard=async()=>{if(!host)return;await SB.from("sessions").update({revealed:true}).eq("id",sid);setLRev(true);};
+
+  const nextLC=async()=>{
+    if(!host)return;
+    const ni=lIdx+1;
+    if(ni>=lDeck.length){await endSess();return;}
+    await SB.from("sessions").update({current_idx:ni,revealed:false}).eq("id",sid);
+    setLIdx(ni);setLRev(false);
   };
 
-  const nextCard = () => {
-    if (idx >= deck.length - 1) { setScreen("end"); return; }
-    setExiting(true);
-    setTimeout(() => { setIdx(i=>i+1); setFlipped(false); setTurn(0); setPrayTurn(0); setExiting(false); }, 280);
+  const endSess=async()=>{
+    await SB.from("sessions").update({status:"complete"}).eq("id",sid);
+    await fetchAns(sid);setSc("lend");
   };
 
-  const advance = () => {
-    if (couplesAndPrayer) {
-      if (!flipped) return;
-      if (prayTurn < 2) { setPrayTurn(t=>t+1); return; }
-      if (prayTurn === 2) { setPrayTurn(3); return; }
-      nextCard();
-    } else if (mode==="couples" && flipped && turn===0) {
-      setTurn(1);
-    } else { nextCard(); }
+  const saveArch=()=>{
+    const lv=LEVELS.find(l=>l.id===lLid);
+    const e={id:sid,code,partner:pNm,level:lLid,levelLabel:lv?.label,date:new Date().toLocaleDateString(),answers:allAns};
+    const up=[e,...sessions.filter(s=>s.id!==sid)];
+    setSessions(up);lsSet("kl_sess",up);shToast("Session saved ✓");
   };
 
-  const canAdvance = couplesAndPrayer ? (flipped || prayTurn > 0) : flipped && (mode==="solo" || turn>=1);
-
-  const shareFavs = () => {
-    const text = favs.map((f,i) => {
-      const lvl = f.levelId==="wild" ? "Wild/Prayer" : (LEVELS.find(l=>l.id===f.levelId)?.label||"");
-      const extra = f.word ? `\nWord: ${f.word}` : f.style ? `\nStyle: ${f.style}` : "";
-      return `${i+1}. [${lvl}]${extra}\n"${f.q}"${f.note ? `\nNote: "${f.note}"` : ""}`;
-    }).join("\n\n");
-    try { navigator.clipboard.writeText(`Known & Loved — Saved Cards\n${"─".repeat(28)}\n\n${text}\n\n"Two are better than one." — Ecclesiastes 4:9`); showToast("Copied ✓"); }
-    catch { showToast("Copy failed — try long-pressing the text"); }
+  const copySess=()=>{
+    const pairs=lDeck.slice(0,lIdx+1).map((_,i)=>{
+      const my=allAns.find(a=>a.card_idx===i&&a.is_host===host);
+      const th=allAns.find(a=>a.card_idx===i&&a.is_host!==host);
+      if(!my&&!th)return null;
+      return `Q: ${lDeck[i]?.q||""}\n${myNm}: ${my?.answer||"—"}\n${pNm||"Partner"}: ${th?.answer||"—"}`;
+    }).filter(Boolean).join("\n\n");
+    try{navigator.clipboard.writeText(`Known & Loved\nWith: ${pNm} · ${new Date().toLocaleDateString()}\n\n${pairs}`);shToast("Copied ✓")}catch{shToast("Copy failed")};
   };
 
-  /* HOME */
-  if (screen==="home") return (
-    <Shell bg="#0e0906">
-      <div style={{ textAlign:"center", maxWidth:420, animation:"fadeUp 0.7s ease" }}>
-        <Overline>A Card Game for Christian Dating</Overline>
-        <h1 style={{ fontSize:"clamp(2.8rem,8vw,4.2rem)", fontWeight:400, color:"#F5EFE4", lineHeight:1.1, margin:"0 0 10px" }}>
-          Known<br /><em style={{ color:"#C9A84C" }}>&amp; Loved</em>
-        </h1>
-        <p style={{ fontFamily:"sans-serif", fontSize:14, lineHeight:1.85, color:"#a89880", margin:"18px 0 36px" }}>
-          Six levels of conversation — from surface to soul. Designed for real connection.
-        </p>
-        <div style={{ display:"flex", gap:10, justifyContent:"center", flexWrap:"wrap" }}>
-          <PrimaryBtn onClick={() => { setMode("solo"); setScreen("level-select"); }} style={{ background:"#C9A84C", color:"#0e0906" }}>Solo Play</PrimaryBtn>
-          <PrimaryBtn onClick={() => { setMode("couples"); setScreen("setup"); }} style={{ background:"transparent", border:"1px solid #4a3e32", color:"#C9A84C" }}>Couples Mode</PrimaryBtn>
+  /* ── solo helpers ── */
+  const isFav=c=>c&&favs.some(f=>f.q===c.q);
+  const togFav=c=>{const n=isFav(c)?favs.filter(f=>f.q!==c.q):[...favs,{...c,levelId:pray?"wild":lid,note:""}];setFavs(n);lsSet("kl_favs",n)};
+  const updNote=(i,note)=>{const n=favs.map((f,j)=>j===i?{...f,note}:f);setFavs(n);lsSet("kl_favs",n)};
+  const startG=(l,p=false)=>{setLid(l);setPray(p);setDeck(shuffle(p?CARDS.wild:CARDS[l]));setIdx(0);setFlip(false);setTurn(0);setPt(0);setSc("game")};
+  const nxt=()=>{if(idx>=deck.length-1){setSc("end");return;}setExit(true);setTimeout(()=>{setIdx(i=>i+1);setFlip(false);setTurn(0);setPt(0);setExit(false)},280)};
+  const adv=()=>{const cp=mode==="couples"&&pray;if(cp){if(!flip)return;if(pt<2){setPt(t=>t+1);return;}if(pt===2){setPt(3);return;}nxt();}else if(mode==="couples"&&flip&&turn===0){setTurn(1);}else{nxt();}};
+  const cAdv=(mode==="couples"&&pray)?(flip||pt>0):flip&&(mode==="solo"||turn>=1);
+  const copyFavs=()=>{const t=favs.map((f,i)=>`${i+1}. [${f.levelId}]\n"${f.q}"${f.note?"\nNote: "+f.note:""}`).join("\n\n");try{navigator.clipboard.writeText(t);shToast("Copied ✓")}catch{shToast("Copy failed")}};
+
+  const lv=LEVELS.find(l=>l.id===lid);
+  const cd=deck[idx];
+  const cc=pray?PC:(lv?.color||"#C9A84C");
+  const cb=pray?PBG:(lv?.bg||"#0e0906");
+  const cp=mode==="couples"&&pray;
+  const lv2=LEVELS.find(l=>l.id===lLid);
+  const lc2=lv2?.color||"#C9A84C";
+  const lb2=lv2?.bg||"#0e0906";
+  const lCard=lDeck[lIdx];
+  const p1=names[0].trim()||"Person 1";
+  const p2=names[1].trim()||"Person 2";
+
+  /* ══ HOME ══ */
+  if(sc==="home")return(
+    <Shell>
+      <Toast msg={toast}/>
+      <div style={{textAlign:"center",maxWidth:420,animation:"fadeUp .7s"}}>
+        <OL>A Card Game for Christian Dating</OL>
+        <h1 style={{fontSize:"clamp(2.8rem,8vw,4.2rem)",fontWeight:400,color:"#F5EFE4",lineHeight:1.1,margin:"0 0 10px"}}>Known<br/><em style={{color:"#C9A84C"}}>&amp; Loved</em></h1>
+        <p style={{fontFamily:"sans-serif",fontSize:14,lineHeight:1.85,color:"#a89880",margin:"18px 0 28px"}}>Six levels of conversation — from surface to soul.</p>
+        <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:10}}>
+          <PB go={()=>{setMode("solo");setSc("levels")}} style={{background:"#C9A84C",color:"#0e0906"}}>Solo Play</PB>
+          <PB go={()=>{setMode("couples");setSc("setup")}} style={{background:"transparent",border:"1px solid #4a3e32",color:"#C9A84C"}}>Couples</PB>
         </div>
-        <button onClick={() => { setMode("solo"); startGame("wild",true); }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, margin:"14px auto 0", background:"rgba(126,184,212,0.06)", border:"1px solid rgba(126,184,212,0.18)", borderRadius:8, padding:"12px 28px", cursor:"pointer", color:PC, fontSize:12, fontFamily:"sans-serif", letterSpacing:"0.15em", textTransform:"uppercase", transition:"all 0.2s" }}
-          onMouseOver={e=>e.currentTarget.style.background="rgba(126,184,212,0.12)"}
-          onMouseOut={e=>e.currentTarget.style.background="rgba(126,184,212,0.06)"}
-        ><span style={{ animation:"pulse 3s infinite" }}>✦</span> Prayer Mode</button>
-        {favs.length>0 && (
-          <button onClick={()=>setScreen("favorites")} style={{ background:"none", border:"none", color:"#9a8f82", fontSize:11, cursor:"pointer", marginTop:22, fontFamily:"sans-serif", letterSpacing:"0.15em", textTransform:"uppercase" }}>
-            ♥ {favs.length} Saved {favs.length===1?"Card":"Cards"}
-          </button>
-        )}
-        <div style={{ marginTop:52, color:"#6a5e50", fontSize:12, fontStyle:"italic" }}>"Two are better than one." — Ecclesiastes 4:9</div>
-      </div>
-    </Shell>
-  );
-
-  /* SETUP */
-  if (screen==="setup") return (
-    <Shell bg="#0e0906">
-      <div style={{ maxWidth:390, width:"100%", animation:"fadeUp 0.5s ease" }}>
-        <BackBtn onClick={()=>setScreen("home")} />
-        <Overline>Couples Mode</Overline>
-        <h2 style={{ color:"#F5EFE4", fontSize:26, fontWeight:400, margin:"0 0 8px", fontStyle:"italic" }}>Enter your names</h2>
-        <p style={{ fontFamily:"sans-serif", fontSize:13, color:"#9a8f82", margin:"0 0 28px", lineHeight:1.7 }}>Optional — but it makes turns feel more personal.</p>
-        {[0,1].map(i => (
-          <input key={i} value={names[i]} placeholder={`Person ${i+1}`}
-            onChange={e=>{ const n=[...names]; n[i]=e.target.value; setNames(n); }}
-            style={{ display:"block", width:"100%", marginBottom:12, background:"rgba(255,255,255,0.04)", border:"1px solid #3a2e22", borderRadius:6, padding:"14px 18px", color:"#F5EFE4", fontSize:15, outline:"none", boxSizing:"border-box" }}
-          />
-        ))}
-        <PrimaryBtn onClick={()=>setScreen("level-select")} style={{ background:"#C9A84C", color:"#0e0906", width:"100%", marginTop:8 }}>Continue</PrimaryBtn>
-        <button onClick={()=>startGame("wild",true)} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, margin:"12px auto 0", width:"100%", background:"rgba(126,184,212,0.06)", border:"1px solid rgba(126,184,212,0.18)", borderRadius:6, padding:"12px", cursor:"pointer", color:PC, fontSize:12, fontFamily:"sans-serif", letterSpacing:"0.13em", textTransform:"uppercase", boxSizing:"border-box" }}>
-          <span style={{ animation:"pulse 3s infinite" }}>✦</span> Couples Prayer Mode
+        <button onClick={()=>setSc("shome")} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,margin:"8px auto 0",background:"rgba(107,142,196,.08)",border:"1px solid rgba(107,142,196,.3)",borderRadius:8,padding:"13px 28px",cursor:"pointer",color:"#6B8EC4",fontSize:12,fontFamily:"sans-serif",letterSpacing:".15em",textTransform:"uppercase",width:"100%",maxWidth:320,transition:"background .2s"}}
+          onMouseOver={e=>e.currentTarget.style.background="rgba(107,142,196,.14)"}
+          onMouseOut={e=>e.currentTarget.style.background="rgba(107,142,196,.08)"}
+        >⬡ Live Session <span style={{fontSize:10,opacity:.6}}>· Real-time</span></button>
+        <button onClick={()=>{setMode("solo");startG("wild",true)}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,margin:"8px auto 0",background:"rgba(126,184,212,.06)",border:"1px solid rgba(126,184,212,.18)",borderRadius:8,padding:"11px 28px",cursor:"pointer",color:PC,fontSize:12,fontFamily:"sans-serif",letterSpacing:".15em",textTransform:"uppercase",width:"100%",maxWidth:320}}>
+          <span style={{animation:"pulse 3s infinite"}}>✦</span> Prayer Mode
         </button>
+        {favs.length>0&&<button onClick={()=>setSc("favs")} style={{background:"none",border:"none",color:"#9a8f82",fontSize:11,cursor:"pointer",marginTop:18,fontFamily:"sans-serif",letterSpacing:".15em",textTransform:"uppercase"}}>♥ {favs.length} Saved</button>}
+        <div style={{marginTop:44,color:"#6a5e50",fontSize:12,fontStyle:"italic"}}>"Two are better than one." — Ecclesiastes 4:9</div>
       </div>
     </Shell>
   );
 
-  /* LEVEL SELECT */
-  if (screen==="level-select") return (
-    <Shell bg="#0e0906">
-      <div style={{ maxWidth:500, width:"100%", animation:"fadeUp 0.5s ease" }}>
-        <BackBtn onClick={()=>setScreen(mode==="couples"?"setup":"home")} />
-        <Overline>Choose a level</Overline>
-        <h2 style={{ color:"#F5EFE4", fontSize:26, fontWeight:400, margin:"0 0 26px" }}>Where do you want to begin?</h2>
-        {LEVELS.map((lvl,i) => (
-          <button key={lvl.id} onClick={()=>startGame(lvl.id)} style={{ display:"flex", alignItems:"center", gap:20, width:"100%", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, padding:"18px 20px", cursor:"pointer", textAlign:"left", marginBottom:8, transition:"all 0.2s", animation:`fadeUp 0.4s ease ${i*0.06}s both` }}
-            onMouseOver={e=>{ e.currentTarget.style.background="rgba(255,255,255,0.07)"; e.currentTarget.style.borderColor=lvl.color+"55"; }}
-            onMouseOut={e=>{ e.currentTarget.style.background="rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.08)"; }}
-          >
-            <div style={{ fontSize:18, color:lvl.color, fontStyle:"italic", minWidth:32, opacity:0.75 }}>{lvl.num}</div>
-            <div>
-              <div style={{ color:lvl.color, fontSize:10, fontWeight:700, letterSpacing:"0.15em", textTransform:"uppercase", fontFamily:"sans-serif", marginBottom:3 }}>{lvl.label} · {CARDS[lvl.id]?.length||30} cards</div>
-              <div style={{ color:"#F5EFE4", fontSize:15, fontStyle:"italic", marginBottom:2 }}>{lvl.tagline}</div>
-              <div style={{ color:"#9a8f82", fontSize:12, fontFamily:"sans-serif", lineHeight:1.5 }}>{lvl.desc}</div>
-            </div>
-          </button>
-        ))}
-        <button onClick={()=>startGame("wild",true)} style={{ display:"flex", alignItems:"center", gap:16, width:"100%", background:"rgba(126,184,212,0.05)", border:"1px solid rgba(126,184,212,0.18)", borderRadius:10, padding:"18px 20px", cursor:"pointer", textAlign:"left", marginTop:4, transition:"all 0.2s" }}
-          onMouseOver={e=>e.currentTarget.style.background="rgba(126,184,212,0.1)"}
-          onMouseOut={e=>e.currentTarget.style.background="rgba(126,184,212,0.05)"}
-        >
-          <div style={{ fontSize:18, color:PC, minWidth:32, opacity:0.75, animation:"pulse 3s infinite" }}>✦</div>
+  /* ══ SESSION HOME ══ */
+  if(sc==="shome")return(
+    <Shell>
+      <div style={{maxWidth:420,width:"100%",animation:"fadeUp .5s"}}>
+        <BB go={()=>setSc("home")}/>
+        <OL c="#6B8EC4">Live Session</OL>
+        <h2 style={{color:"#F5EFE4",fontSize:26,fontWeight:400,margin:"0 0 8px",fontStyle:"italic"}}>Play together, remotely.</h2>
+        <p style={{fontFamily:"sans-serif",fontSize:13,color:"#9a8f82",margin:"0 0 28px",lineHeight:1.75}}>You create a session and share the code. She joins on her phone. Same cards, same time — both of you answer and see each other's responses live.</p>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <PB go={()=>setSc("create")} style={{background:"#6B8EC4",color:"#0e0906",width:"100%"}}>Create a Session</PB>
+          <GB go={()=>setSc("join")} style={{width:"100%",textAlign:"center"}}>Join with a Code</GB>
+          {sessions.length>0&&<GB go={()=>setSc("mysess")} style={{width:"100%",textAlign:"center"}}>My Sessions ({sessions.length})</GB>}
+        </div>
+      </div>
+    </Shell>
+  );
+
+  /* ══ CREATE SESSION ══ */
+  if(sc==="create")return(
+    <Shell>
+      <div style={{maxWidth:420,width:"100%",animation:"fadeUp .5s"}}>
+        <BB go={()=>setSc("shome")}/>
+        <OL c="#6B8EC4">New Session</OL>
+        <h2 style={{color:"#F5EFE4",fontSize:24,fontWeight:400,margin:"0 0 22px",fontStyle:"italic"}}>Set it up</h2>
+        <label style={{color:"#9a8f82",fontSize:11,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",display:"block",marginBottom:8}}>Your name</label>
+        <Inp val={cName} set={setCName} ph="Anthony" style={{marginBottom:20}}/>
+        <label style={{color:"#9a8f82",fontSize:11,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",display:"block",marginBottom:12}}>Choose a level</label>
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:22}}>
+          {LEVELS.map(l=>(
+            <button key={l.id} onClick={()=>setCLvl(l.id)} style={{display:"flex",alignItems:"center",gap:12,background:cLvl===l.id?`${l.color}18`:"rgba(255,255,255,.02)",border:`1px solid ${cLvl===l.id?l.color+"55":"rgba(255,255,255,.07)"}`,borderRadius:8,padding:"11px 14px",cursor:"pointer",textAlign:"left",transition:"all .2s"}}>
+              <div style={{fontSize:13,color:l.color,minWidth:26,opacity:.8,fontStyle:"italic"}}>{l.num}</div>
+              <div>
+                <div style={{color:"#F5EFE4",fontSize:13,fontStyle:"italic"}}>{l.tagline}</div>
+                <div style={{color:"#7a7060",fontSize:10,fontFamily:"sans-serif"}}>{l.label} · {CARDS[l.id]?.length||30} cards</div>
+              </div>
+            </button>
+          ))}
+        </div>
+        {sErr&&<p style={{color:"#e8665a",fontSize:12,fontFamily:"sans-serif",marginBottom:12}}>{sErr}</p>}
+        <PB go={createSess} off={busy} style={{background:"#6B8EC4",color:"#0e0906",width:"100%"}}>{busy?"Creating…":"Create Session"}</PB>
+      </div>
+    </Shell>
+  );
+
+  /* ══ WAITING ROOM ══ */
+  if(sc==="waiting")return(
+    <Shell bg="#080c14">
+      <Toast msg={toast}/>
+      <div style={{textAlign:"center",maxWidth:400,animation:"fadeUp .5s"}}>
+        <OL c="#6B8EC4">Session Ready</OL>
+        <p style={{fontFamily:"sans-serif",fontSize:13,color:"#9a8f82",marginBottom:24,lineHeight:1.7}}>Share this code. She enters it to join from the same URL.</p>
+        <div style={{background:"rgba(107,142,196,.1)",border:"1px solid rgba(107,142,196,.3)",borderRadius:16,padding:"32px 40px",marginBottom:24}}>
+          <div style={{fontSize:"clamp(2.5rem,10vw,3.5rem)",fontWeight:400,color:"#F5EFE4",letterSpacing:".2em",fontFamily:"sans-serif"}}>{code}</div>
+          <div style={{color:"#6B8EC4",fontSize:11,letterSpacing:".2em",textTransform:"uppercase",fontFamily:"sans-serif",marginTop:12,animation:"blink 2s infinite"}}>Waiting for her to join…</div>
+        </div>
+        <p style={{fontFamily:"sans-serif",fontSize:12,color:"#7a6e60",marginBottom:24,lineHeight:1.7}}>She opens the same link → <strong style={{color:"#9a8f82"}}>Live Session → Join with a Code</strong></p>
+        <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+          <PB go={()=>{navigator.clipboard.writeText(code);shToast("Code copied!")}} style={{background:"#6B8EC4",color:"#0e0906",padding:"13px 28px",fontSize:12}}>Copy Code</PB>
+          <GB go={async()=>{await SB.from("sessions").update({status:"cancelled"}).eq("id",sid);setSc("shome")}}>Cancel</GB>
+        </div>
+      </div>
+    </Shell>
+  );
+
+  /* ══ JOIN SESSION ══ */
+  if(sc==="join")return(
+    <Shell>
+      <div style={{maxWidth:390,width:"100%",animation:"fadeUp .5s"}}>
+        <BB go={()=>setSc("shome")}/>
+        <OL c="#6B8EC4">Join a Session</OL>
+        <h2 style={{color:"#F5EFE4",fontSize:24,fontWeight:400,margin:"0 0 22px",fontStyle:"italic"}}>Enter the code</h2>
+        <label style={{color:"#9a8f82",fontSize:11,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",display:"block",marginBottom:8}}>Room code</label>
+        <Inp val={jCode} set={v=>setJCode(v.toUpperCase())} ph="ABC123" style={{marginBottom:16,fontSize:22,letterSpacing:".2em",textAlign:"center",fontFamily:"sans-serif"}}/>
+        <label style={{color:"#9a8f82",fontSize:11,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",display:"block",marginBottom:8}}>Your name</label>
+        <Inp val={jName} set={setJName} ph="Your name" style={{marginBottom:18}}/>
+        {sErr&&<p style={{color:"#e8665a",fontSize:12,fontFamily:"sans-serif",marginBottom:12}}>{sErr}</p>}
+        <PB go={joinSess} off={busy||jCode.length<4} style={{background:"#6B8EC4",color:"#0e0906",width:"100%"}}>{busy?"Joining…":"Join Session"}</PB>
+      </div>
+    </Shell>
+  );
+
+  /* ══ LIVE GAME ══ */
+  if(sc==="live"&&lCard)return(
+    <Shell bg={lb2}>
+      <Toast msg={toast}/>
+      <div style={{maxWidth:480,width:"100%",display:"flex",flexDirection:"column",alignItems:"center"}}>
+        {/* header */}
+        <div style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
-            <div style={{ color:PC, fontSize:10, fontWeight:700, letterSpacing:"0.15em", textTransform:"uppercase", fontFamily:"sans-serif", marginBottom:3 }}>{mode==="couples"?"Couples ":""}Prayer Mode · 30 cards</div>
-            <div style={{ color:"#F5EFE4", fontSize:15, fontStyle:"italic", marginBottom:2 }}>Pray together. Linger here.</div>
-            <div style={{ color:"#9a8f82", fontSize:12, fontFamily:"sans-serif", lineHeight:1.5 }}>{mode==="couples"?"Each card becomes a prompt to pray aloud — one person then the other.":"Scripture, testimony, and cards designed to turn into prayer."}</div>
+            <div style={{color:"#9a8f82",fontSize:10,letterSpacing:".12em",textTransform:"uppercase",fontFamily:"sans-serif"}}>{code}</div>
+            <div style={{color:pOn?"#5A9E7A":"#7a6e60",fontSize:10,fontFamily:"sans-serif",marginTop:2}}>{pOn?`${pNm} is here`:"Waiting…"}</div>
+          </div>
+          <div style={{color:"#7a6e60",fontSize:11,fontFamily:"sans-serif"}}>{lIdx+1} / {lDeck.length}</div>
+          <div style={{color:lc2,fontSize:10,letterSpacing:".12em",textTransform:"uppercase",fontFamily:"sans-serif",opacity:.85}}>{lv2?.label}</div>
+        </div>
+        {/* progress */}
+        <div style={{width:"100%",height:2,background:"rgba(255,255,255,.06)",borderRadius:2,marginBottom:20}}>
+          <div style={{height:"100%",borderRadius:2,background:lc2,width:`${((lIdx+1)/lDeck.length)*100}%`,transition:"width .4s"}}/>
+        </div>
+        {/* card */}
+        <div onClick={()=>{if(host&&!lRev)revCard()}} style={{width:"100%",minHeight:200,background:lRev?`linear-gradient(150deg,${lb2} 0%,#181208 100%)`:"linear-gradient(150deg,#1e1710 0%,#141008 100%)",border:`1px solid ${lRev?lc2+"40":"rgba(255,255,255,.08)"}`,borderRadius:16,padding:"30px 26px",cursor:host&&!lRev?"pointer":"default",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",textAlign:"center",boxShadow:lRev?`0 0 60px ${lc2}12,0 20px 50px rgba(0,0,0,.6)`:"0 16px 40px rgba(0,0,0,.5)",transition:"all .45s",position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:13,left:15,fontSize:9,color:lc2,opacity:.4,letterSpacing:".2em",fontFamily:"sans-serif",textTransform:"uppercase"}}>{lv2?.label}</div>
+          {!lRev?(
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
+              <div style={{fontSize:24,opacity:.2,color:lc2}}>✦</div>
+              <div style={{color:"#9a8f82",fontSize:11,letterSpacing:".2em",textTransform:"uppercase",fontFamily:"sans-serif"}}>{host?"Tap to reveal":"Waiting for host…"}</div>
+            </div>
+          ):<CardFace card={lCard} color={lc2}/>}
+        </div>
+        {/* answers */}
+        {lRev&&(
+          <div style={{width:"100%",marginTop:14,display:"flex",flexDirection:"column",gap:10,animation:"fadeUp .4s"}}>
+            <div style={{background:"rgba(255,255,255,.03)",border:`1px solid ${lc2}33`,borderRadius:10,padding:"13px 15px"}}>
+              <div style={{color:lc2,fontSize:10,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",marginBottom:7}}>{myNm} (you)</div>
+              <textarea value={myAns} onChange={e=>setMyAns(e.target.value)} placeholder="Type your answer…" rows={3} style={{width:"100%",background:"transparent",border:"none",color:"#F5EFE4",fontSize:13,fontFamily:"Georgia,serif",lineHeight:1.6,outline:"none",fontStyle:myAns?"normal":"italic"}}/>
+            </div>
+            <div style={{background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",borderRadius:10,padding:"13px 15px"}}>
+              <div style={{color:"#9a8f82",fontSize:10,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",marginBottom:7}}>{pNm||"Partner"}</div>
+              <p style={{color:pAns?"#c8b89a":"#4a4035",fontSize:13,fontFamily:"Georgia,serif",lineHeight:1.6,margin:0,fontStyle:"italic",minHeight:20}}>{pAns||"Waiting for their answer…"}</p>
+            </div>
+          </div>
+        )}
+        {/* actions */}
+        <div style={{display:"flex",gap:10,marginTop:14,width:"100%",justifyContent:"center",flexWrap:"wrap"}}>
+          {host?(
+            <>
+              {lIdx<lDeck.length-1?(
+                <PB go={nextLC} style={{background:lc2,color:"#0e0906",padding:"13px 28px",fontSize:12}}>Next Card</PB>
+              ):(
+                <PB go={endSess} style={{background:"#A85050",color:"#F5EFE4",padding:"13px 28px",fontSize:12}}>End Session</PB>
+              )}
+              <GB go={endSess} style={{fontSize:11,padding:"10px 16px"}}>End Early</GB>
+            </>
+          ):(
+            <div style={{color:"#7a6e60",fontSize:12,fontFamily:"sans-serif",letterSpacing:".1em",textTransform:"uppercase",marginTop:8}}>
+              {lRev?"Host controls navigation":"Waiting for host…"}
+            </div>
+          )}
+        </div>
+      </div>
+    </Shell>
+  );
+
+  /* ══ LIVE END ══ */
+  if(sc==="lend")return(
+    <Shell>
+      <Toast msg={toast}/>
+      <div style={{maxWidth:520,width:"100%",animation:"fadeUp .6s"}}>
+        <div style={{textAlign:"center",marginBottom:28}}>
+          <div style={{fontSize:28,color:"#C9A84C",opacity:.45,marginBottom:12,animation:"pulse 3s infinite"}}>✦</div>
+          <h2 style={{color:"#F5EFE4",fontSize:26,fontWeight:400,fontStyle:"italic",margin:"0 0 6px"}}>Session Complete</h2>
+          <p style={{fontFamily:"sans-serif",fontSize:13,color:"#9a8f82"}}>With {pNm} · {lv2?.label}</p>
+        </div>
+        <div style={{maxHeight:"42vh",overflowY:"auto",marginBottom:18}}>
+          {lDeck.slice(0,lIdx+1).map((_,i)=>{
+            const my=allAns.find(a=>a.card_idx===i&&a.is_host===host);
+            const th=allAns.find(a=>a.card_idx===i&&a.is_host!==host);
+            if(!my&&!th)return null;
+            return(
+              <div key={i} style={{background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.07)",borderRadius:10,padding:"15px 16px",marginBottom:8}}>
+                <p style={{color:"#c8b89a",fontSize:13,fontStyle:"italic",lineHeight:1.6,marginBottom:10}}>{lDeck[i]?.q}</p>
+                {my?.answer&&<div style={{marginBottom:6}}><span style={{color:"#C9A84C",fontSize:10,fontFamily:"sans-serif",letterSpacing:".1em",textTransform:"uppercase"}}>{myNm}: </span><span style={{color:"#ede5d8",fontSize:13,fontFamily:"sans-serif"}}>{my.answer}</span></div>}
+                {th?.answer&&<div><span style={{color:"#9a8f82",fontSize:10,fontFamily:"sans-serif",letterSpacing:".1em",textTransform:"uppercase"}}>{pNm}: </span><span style={{color:"#9a8f82",fontSize:13,fontFamily:"sans-serif"}}>{th.answer}</span></div>}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center"}}>
+          <PB go={saveArch} style={{background:"#C9A84C",color:"#0e0906",padding:"13px 22px",fontSize:12}}>Save Session</PB>
+          <GB go={copySess} style={{fontSize:12,padding:"11px 18px"}}>Copy All</GB>
+          <GB go={()=>{setSc("shome");setSid(null)}} style={{fontSize:12,padding:"11px 18px"}}>Done</GB>
+        </div>
+      </div>
+    </Shell>
+  );
+
+  /* ══ MY SESSIONS ══ */
+  if(sc==="mysess")return(
+    <Shell>
+      <div style={{maxWidth:520,width:"100%",animation:"fadeUp .5s"}}>
+        <BB go={()=>setSc("shome")}/>
+        <OL c="#6B8EC4">My Sessions</OL>
+        <h2 style={{color:"#F5EFE4",fontSize:26,fontWeight:400,margin:"0 0 22px",fontStyle:"italic"}}>{sessions.length} conversation{sessions.length!==1?"s":""}</h2>
+        {sessions.map((s,i)=>(
+          <button key={i} onClick={()=>{setVSess(s);setSc("sdetail")}} style={{display:"block",width:"100%",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.07)",borderRadius:10,padding:"16px 18px",cursor:"pointer",textAlign:"left",marginBottom:8,transition:"all .2s"}}
+            onMouseOver={e=>e.currentTarget.style.background="rgba(255,255,255,.06)"}
+            onMouseOut={e=>e.currentTarget.style.background="rgba(255,255,255,.03)"}
+          >
+            <div style={{color:"#6B8EC4",fontSize:10,fontWeight:700,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",marginBottom:4}}>{s.levelLabel||s.level} · {s.date}</div>
+            <div style={{color:"#F5EFE4",fontSize:16,fontStyle:"italic",marginBottom:2}}>With {s.partner}</div>
+            <div style={{color:"#7a7060",fontSize:12,fontFamily:"sans-serif"}}>{s.answers?.length||0} answers · {s.code}</div>
+          </button>
+        ))}
+      </div>
+    </Shell>
+  );
+
+  /* ══ SESSION DETAIL ══ */
+  if(sc==="sdetail"&&vSess)return(
+    <Shell>
+      <div style={{maxWidth:520,width:"100%",animation:"fadeUp .5s"}}>
+        <BB go={()=>setSc("mysess")}/>
+        <OL c="#6B8EC4">{vSess.levelLabel} · {vSess.date}</OL>
+        <h2 style={{color:"#F5EFE4",fontSize:24,fontWeight:400,margin:"0 0 20px",fontStyle:"italic"}}>With {vSess.partner}</h2>
+        {Array.from(new Set((vSess.answers||[]).map(a=>a.card_idx))).sort((a,b)=>a-b).map(ci=>{
+          const hA=vSess.answers.find(a=>a.card_idx===ci&&a.is_host);
+          const gA=vSess.answers.find(a=>a.card_idx===ci&&!a.is_host);
+          const q=(hA||gA)?.card_question||"";
+          return(
+            <div key={ci} style={{background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.07)",borderRadius:10,padding:"15px 16px",marginBottom:10}}>
+              <p style={{color:"#c8b89a",fontSize:13,fontStyle:"italic",lineHeight:1.6,marginBottom:10}}>{q}</p>
+              {hA?.answer&&<div style={{marginBottom:6}}><span style={{color:"#C9A84C",fontSize:10,fontFamily:"sans-serif",letterSpacing:".1em",textTransform:"uppercase"}}>{hA.player_name}: </span><span style={{color:"#ede5d8",fontSize:13,fontFamily:"sans-serif"}}>{hA.answer}</span></div>}
+              {gA?.answer&&<div><span style={{color:"#9a8f82",fontSize:10,fontFamily:"sans-serif",letterSpacing:".1em",textTransform:"uppercase"}}>{gA.player_name}: </span><span style={{color:"#9a8f82",fontSize:13,fontFamily:"sans-serif"}}>{gA.answer}</span></div>}
+            </div>
+          );
+        })}
+        <GB go={()=>{const u=sessions.filter(s=>s.id!==vSess.id);setSessions(u);lsSet("kl_sess",u);setSc("mysess")}} style={{marginTop:8,color:"#e8665a",borderColor:"#e8665a44"}}>Delete Session</GB>
+      </div>
+    </Shell>
+  );
+
+  /* ══ SOLO SETUP ══ */
+  if(sc==="setup")return(
+    <Shell>
+      <div style={{maxWidth:390,width:"100%",animation:"fadeUp .5s"}}>
+        <BB go={()=>setSc("home")}/>
+        <OL>Couples Mode</OL>
+        <h2 style={{color:"#F5EFE4",fontSize:26,fontWeight:400,margin:"0 0 8px",fontStyle:"italic"}}>Enter your names</h2>
+        <p style={{fontFamily:"sans-serif",fontSize:13,color:"#9a8f82",margin:"0 0 24px",lineHeight:1.7}}>Optional — makes turns feel more personal.</p>
+        {[0,1].map(i=><Inp key={i} val={names[i]} set={v=>{const n=[...names];n[i]=v;setNames(n)}} ph={`Person ${i+1}`} style={{marginBottom:12}}/>)}
+        <PB go={()=>setSc("levels")} style={{background:"#C9A84C",color:"#0e0906",width:"100%",marginTop:8}}>Continue</PB>
+        <button onClick={()=>startG("wild",true)} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,margin:"10px auto 0",width:"100%",background:"rgba(126,184,212,.06)",border:"1px solid rgba(126,184,212,.18)",borderRadius:6,padding:"12px",cursor:"pointer",color:PC,fontSize:12,fontFamily:"sans-serif",letterSpacing:".13em",textTransform:"uppercase",boxSizing:"border-box"}}>✦ Couples Prayer Mode</button>
+      </div>
+    </Shell>
+  );
+
+  /* ══ LEVELS ══ */
+  if(sc==="levels")return(
+    <Shell>
+      <div style={{maxWidth:500,width:"100%",animation:"fadeUp .5s"}}>
+        <BB go={()=>setSc(mode==="couples"?"setup":"home")}/>
+        <OL>Choose a level</OL>
+        <h2 style={{color:"#F5EFE4",fontSize:26,fontWeight:400,margin:"0 0 22px"}}>Where do you want to begin?</h2>
+        {LEVELS.map((l,i)=>(
+          <button key={l.id} onClick={()=>startG(l.id)} style={{display:"flex",alignItems:"center",gap:18,width:"100%",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:"17px 18px",cursor:"pointer",textAlign:"left",marginBottom:8,transition:"all .2s",animation:`fadeUp .4s ease ${i*.06}s both`}}
+            onMouseOver={e=>{e.currentTarget.style.background="rgba(255,255,255,.07)";e.currentTarget.style.borderColor=l.color+"55"}}
+            onMouseOut={e=>{e.currentTarget.style.background="rgba(255,255,255,.03)";e.currentTarget.style.borderColor="rgba(255,255,255,.08)"}}
+          >
+            <div style={{fontSize:17,color:l.color,fontStyle:"italic",minWidth:30,opacity:.75}}>{l.num}</div>
+            <div>
+              <div style={{color:l.color,fontSize:10,fontWeight:700,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",marginBottom:3}}>{l.label} · {CARDS[l.id]?.length||30} cards</div>
+              <div style={{color:"#F5EFE4",fontSize:14,fontStyle:"italic",marginBottom:2}}>{l.tagline}</div>
+              <div style={{color:"#9a8f82",fontSize:12,fontFamily:"sans-serif",lineHeight:1.5}}>{l.desc}</div>
+            </div>
+          </button>
+        ))}
+        <button onClick={()=>startG("wild",true)} style={{display:"flex",alignItems:"center",gap:14,width:"100%",background:"rgba(126,184,212,.05)",border:"1px solid rgba(126,184,212,.18)",borderRadius:10,padding:"17px 18px",cursor:"pointer",textAlign:"left",marginTop:4}}
+          onMouseOver={e=>e.currentTarget.style.background="rgba(126,184,212,.1)"}
+          onMouseOut={e=>e.currentTarget.style.background="rgba(126,184,212,.05)"}
+        >
+          <div style={{fontSize:17,color:PC,minWidth:30,opacity:.75,animation:"pulse 3s infinite"}}>✦</div>
+          <div>
+            <div style={{color:PC,fontSize:10,fontWeight:700,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",marginBottom:3}}>{mode==="couples"?"Couples ":""}Prayer Mode</div>
+            <div style={{color:"#F5EFE4",fontSize:14,fontStyle:"italic",marginBottom:2}}>Pray together. Linger here.</div>
+            <div style={{color:"#9a8f82",fontSize:12,fontFamily:"sans-serif",lineHeight:1.5}}>{mode==="couples"?"Each card is a prompt to pray aloud — one then the other.":"Scripture and cards designed to turn into prayer."}</div>
           </div>
         </button>
       </div>
     </Shell>
   );
 
-  /* GAME */
-  if (screen==="game" && card) {
-    const showPrayOverlay = couplesAndPrayer && prayTurn>=1 && prayTurn<=2;
-    const prayingPerson   = prayTurn===1 ? p1 : p2;
-    return (
-      <Shell bg={cardBg}>
-        <div style={{ maxWidth:440, width:"100%", display:"flex", flexDirection:"column", alignItems:"center" }}>
-          {/* Top bar */}
-          <div style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:22 }}>
-            <button onClick={()=>setScreen("level-select")} style={{ background:"none", border:"none", color:"#9a8f82", cursor:"pointer", fontSize:11, letterSpacing:"0.15em", textTransform:"uppercase", fontFamily:"sans-serif", padding:0 }}>← Levels</button>
-            <div style={{ color:"#7a6e60", fontSize:11, letterSpacing:"0.15em", fontFamily:"sans-serif" }}>{idx+1} / {deck.length}</div>
-            <div style={{ fontSize:11, color:cardColor, letterSpacing:"0.15em", textTransform:"uppercase", fontFamily:"sans-serif", opacity:0.9 }}>
-              {isPrayer?(mode==="couples"?"Couples Prayer":"Prayer Mode"):level?.label}
-            </div>
+  /* ══ SOLO GAME ══ */
+  if(sc==="game"&&cd){
+    const spo=cp&&pt>=1&&pt<=2;
+    const pp=pt===1?p1:p2;
+    return(
+      <Shell bg={cb}>
+        <Toast msg={toast}/>
+        <div style={{maxWidth:440,width:"100%",display:"flex",flexDirection:"column",alignItems:"center"}}>
+          <div style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+            <button onClick={()=>setSc("levels")} style={{background:"none",border:"none",color:"#9a8f82",cursor:"pointer",fontSize:11,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",padding:0}}>← Levels</button>
+            <div style={{color:"#7a6e60",fontSize:11,fontFamily:"sans-serif"}}>{idx+1} / {deck.length}</div>
+            <div style={{fontSize:11,color:cc,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",opacity:.9}}>{pray?(mode==="couples"?"Couples Prayer":"Prayer"):lv?.label}</div>
           </div>
-          {/* Progress */}
-          <div style={{ width:"100%", height:2, background:"rgba(255,255,255,0.06)", borderRadius:2, marginBottom:28 }}>
-            <div style={{ height:"100%", borderRadius:2, background:cardColor, width:`${((idx+1)/deck.length)*100}%`, transition:"width 0.4s ease" }} />
+          <div style={{width:"100%",height:2,background:"rgba(255,255,255,.06)",borderRadius:2,marginBottom:26}}>
+            <div style={{height:"100%",borderRadius:2,background:cc,width:`${((idx+1)/deck.length)*100}%`,transition:"width .4s"}}/>
           </div>
-          {/* Couples turn badge */}
-          {mode==="couples" && !isPrayer && flipped && (
-            <div style={{ background:`${cardColor}18`, border:`1px solid ${cardColor}33`, borderRadius:20, padding:"6px 18px", marginBottom:16, fontSize:11, color:cardColor, letterSpacing:"0.12em", fontFamily:"sans-serif", fontWeight:700, textTransform:"uppercase", animation:"fadeUp 0.3s ease" }}>
-              {turn===0?`${p1}'s turn`:`${p2}'s turn`}
+          {mode==="couples"&&!pray&&flip&&<div style={{background:`${cc}18`,border:`1px solid ${cc}33`,borderRadius:20,padding:"6px 18px",marginBottom:14,fontSize:11,color:cc,letterSpacing:".12em",fontFamily:"sans-serif",fontWeight:700,textTransform:"uppercase",animation:"fadeUp .3s"}}>{turn===0?`${p1}'s turn`:`${p2}'s turn`}</div>}
+          {pray&&<div style={{position:"fixed",top:"40%",left:"50%",transform:"translate(-50%,-50%)",width:400,height:400,borderRadius:"50%",background:`radial-gradient(circle,${PC}0c 0%,transparent 70%)`,pointerEvents:"none",animation:"pulse 4s infinite"}}/>}
+          {spo&&(
+            <div style={{position:"fixed",inset:0,zIndex:20,background:"rgba(7,12,16,.93)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,animation:"fadeIn .4s"}}>
+              <div style={{position:"relative",width:90,height:90,marginBottom:32}}>
+                {[0,1,2].map(i=><div key={i} style={{position:"absolute",inset:0,border:`1px solid ${PC}`,borderRadius:"50%",animation:`ripple 2.4s ease-out ${i*.8}s infinite`,opacity:0}}/>)}
+                <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,color:PC,animation:"breathe 3s ease-in-out infinite"}}>✦</div>
+              </div>
+              <div style={{fontSize:11,color:PC,letterSpacing:".25em",textTransform:"uppercase",fontFamily:"sans-serif",marginBottom:14,opacity:.7}}>Praying aloud</div>
+              <div style={{fontSize:"clamp(1.5rem,6vw,2rem)",color:"#F5EFE4",fontStyle:"italic",marginBottom:12,textAlign:"center"}}>{pp}</div>
+              <p style={{color:"#9a8f82",fontSize:13,fontFamily:"sans-serif",lineHeight:1.75,textAlign:"center",maxWidth:300,margin:"0 0 40px"}}>{pt===1?`${p1}, take a moment to pray aloud.`:`${p2}, pray aloud — whatever the Spirit puts on your heart.`}</p>
+              <button onClick={adv} style={{background:PC,color:"#0e0906",border:"none",borderRadius:4,padding:"14px 40px",fontSize:13,fontWeight:700,letterSpacing:".15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"sans-serif"}}>Amen {pt===1?`· ${p2}'s Turn →`:"· Next Card →"}</button>
             </div>
           )}
-          {/* Prayer ambient */}
-          {isPrayer && <div style={{ position:"fixed", top:"40%", left:"50%", transform:"translate(-50%,-50%)", width:400, height:400, borderRadius:"50%", background:`radial-gradient(circle,${PC}0c 0%,transparent 70%)`, pointerEvents:"none", animation:"pulse 4s infinite" }} />}
-          {/* Prayer overlay */}
-          {showPrayOverlay && (
-            <div style={{ position:"fixed", inset:0, zIndex:20, background:"rgba(7,12,16,0.93)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32, animation:"fadeIn 0.4s ease" }}>
-              <div style={{ position:"relative", width:90, height:90, marginBottom:32 }}>
-                {[0,1,2].map(i=><div key={i} style={{ position:"absolute", inset:0, border:`1px solid ${PC}`, borderRadius:"50%", animation:`ripple 2.4s ease-out ${i*0.8}s infinite`, opacity:0 }} />)}
-                <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, color:PC, animation:"breathe 3s ease-in-out infinite" }}>✦</div>
-              </div>
-              <div style={{ fontSize:11, color:PC, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"sans-serif", marginBottom:14, opacity:0.7 }}>Praying aloud</div>
-              <div style={{ fontSize:"clamp(1.5rem,6vw,2rem)", color:"#F5EFE4", fontStyle:"italic", marginBottom:12, textAlign:"center" }}>{prayingPerson}</div>
-              <p style={{ color:"#9a8f82", fontSize:13, fontFamily:"sans-serif", lineHeight:1.75, textAlign:"center", maxWidth:300, margin:"0 0 40px" }}>
-                {prayTurn===1?`${p1}, take a moment to pray aloud — for yourself, for ${p2}, or for both of you.`:`${p2}, take a moment to pray aloud — whatever the Spirit puts on your heart.`}
-              </p>
-              <button onClick={advance} style={{ background:PC, color:"#0e0906", border:"none", borderRadius:4, padding:"14px 40px", fontSize:13, fontWeight:700, letterSpacing:"0.15em", textTransform:"uppercase", cursor:"pointer", fontFamily:"sans-serif" }}>
-                Amen {prayTurn===1?`· ${p2}'s Turn →`:"· Next Card →"}
-              </button>
-            </div>
-          )}
-          {/* Card */}
-          <div onClick={()=>!flipped&&setFlipped(true)} style={{ width:"100%", minHeight:(isWound||isStyle)&&flipped?340:300, background:flipped?`linear-gradient(150deg,${cardBg} 0%,#181208 100%)`:"linear-gradient(150deg,#1e1710 0%,#141008 100%)", border:`1px solid ${flipped?cardColor+"40":"rgba(255,255,255,0.08)"}`, borderRadius:16, padding:"36px 30px", cursor:flipped?"default":"pointer", display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", textAlign:"center", boxShadow:flipped?`0 0 80px ${cardColor}12,0 24px 60px rgba(0,0,0,0.6)`:"0 20px 50px rgba(0,0,0,0.5)", transition:"all 0.45s ease", transform:exiting?"translateX(-20px)":"translateX(0)", opacity:exiting?0:1, position:"relative", overflow:"hidden" }}>
-            <div style={{ position:"absolute", top:15, left:18, fontSize:9, color:cardColor, opacity:0.4, letterSpacing:"0.2em", fontFamily:"sans-serif", textTransform:"uppercase" }}>
-              {isPrayer?"Prayer":isWound&&flipped?"Wound Word":isStyle&&flipped?"Attachment Style":level?.label}
-            </div>
-            {flipped && (
-              <button onClick={e=>{ e.stopPropagation(); toggleFav(card); }} style={{ position:"absolute", top:10, right:14, background:"none", border:"none", cursor:"pointer", fontSize:20, color:isFav(card)?"#e8665a":"#7a6e60", transition:"color 0.2s,transform 0.15s", transform:isFav(card)?"scale(1.15)":"scale(1)" }}>♥</button>
-            )}
-            {!flipped ? (
-              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:14 }}>
-                <div style={{ fontSize:28, opacity:0.2, color:cardColor, animation:isPrayer?"pulse 3s infinite":"none" }}>✦</div>
-                <div style={{ color:"#9a8f82", fontSize:11, letterSpacing:"0.2em", textTransform:"uppercase", fontFamily:"sans-serif" }}>Tap to reveal</div>
-              </div>
-            ) : isWound ? (
-              <div style={{ animation:"fadeUp 0.35s ease", width:"100%" }}>
-                <div style={{ fontSize:"clamp(1.6rem,5vw,2rem)", color:cardColor, fontWeight:400, marginBottom:10 }}>{card.word}</div>
-                <div style={{ color:"#9a8f82", fontSize:12, fontFamily:"sans-serif", lineHeight:1.6, marginBottom:20, fontStyle:"italic", opacity:0.85 }}>{card.def}</div>
-                <div style={{ height:1, background:`${cardColor}25`, marginBottom:20 }} />
-                <p style={{ color:"#F5EFE4", fontSize:"clamp(1rem,3vw,1.15rem)", lineHeight:1.72, margin:0, fontStyle:"italic" }}>{card.q}</p>
-                {card.v && <p style={{ color:cardColor, fontSize:11, marginTop:20, opacity:0.65, fontFamily:"sans-serif", lineHeight:1.6 }}>{card.v}</p>}
-              </div>
-            ) : isStyle ? (
-              <div style={{ animation:"fadeUp 0.35s ease", width:"100%" }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, justifyContent:"center", marginBottom:12 }}>
-                  <span style={{ background:`${STYLE_COLORS[card.style]}22`, border:`1px solid ${STYLE_COLORS[card.style]}55`, borderRadius:20, padding:"4px 14px", fontSize:12, color:STYLE_COLORS[card.style], fontFamily:"sans-serif", fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase" }}>{card.style}</span>
-                </div>
-                <div style={{ color:"#9a8f82", fontSize:12, fontFamily:"sans-serif", lineHeight:1.65, marginBottom:20, fontStyle:"italic", opacity:0.9, textAlign:"center" }}>{card.desc}</div>
-                <div style={{ height:1, background:`${STYLE_COLORS[card.style]}25`, marginBottom:20 }} />
-                <p style={{ color:"#F5EFE4", fontSize:"clamp(1rem,3vw,1.15rem)", lineHeight:1.72, margin:0, fontStyle:"italic" }}>{card.q}</p>
-                {card.v && <p style={{ color:STYLE_COLORS[card.style], fontSize:11, marginTop:20, opacity:0.65, fontFamily:"sans-serif", lineHeight:1.6 }}>{card.v}</p>}
-              </div>
-            ) : (
-              <div style={{ animation:"fadeUp 0.35s ease" }}>
-                <p style={{ color:"#F5EFE4", fontSize:"clamp(1.05rem,3.2vw,1.22rem)", lineHeight:1.72, margin:0, fontStyle:"italic" }}>{card.q}</p>
-                {card.v && <p style={{ color:cardColor, fontSize:11, marginTop:24, opacity:0.7, fontFamily:"sans-serif", lineHeight:1.6 }}>{card.v}</p>}
-              </div>
-            )}
+          <div onClick={()=>!flip&&setFlip(true)} style={{width:"100%",minHeight:(cd.type==="wound"||cd.type==="style")&&flip?310:270,background:flip?`linear-gradient(150deg,${cb} 0%,#181208 100%)`:"linear-gradient(150deg,#1e1710 0%,#141008 100%)",border:`1px solid ${flip?cc+"40":"rgba(255,255,255,.08)"}`,borderRadius:16,padding:"32px 26px",cursor:flip?"default":"pointer",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",textAlign:"center",boxShadow:flip?`0 0 80px ${cc}12,0 24px 60px rgba(0,0,0,.6)`:"0 20px 50px rgba(0,0,0,.5)",transition:"all .45s",transform:exit?"translateX(-20px)":"translateX(0)",opacity:exit?0:1,position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",top:13,left:15,fontSize:9,color:cc,opacity:.4,letterSpacing:".2em",fontFamily:"sans-serif",textTransform:"uppercase"}}>{pray?"Prayer":cd.type==="wound"&&flip?"Wound Word":cd.type==="style"&&flip?"Attachment Style":lv?.label}</div>
+            {flip&&<button onClick={e=>{e.stopPropagation();togFav(cd)}} style={{position:"absolute",top:9,right:13,background:"none",border:"none",cursor:"pointer",fontSize:20,color:isFav(cd)?"#e8665a":"#7a6e60",transition:"color .2s,transform .15s",transform:isFav(cd)?"scale(1.15)":"scale(1)"}}>♥</button>}
+            {!flip?(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}><div style={{fontSize:28,opacity:.2,color:cc,animation:pray?"pulse 3s infinite":"none"}}>✦</div><div style={{color:"#9a8f82",fontSize:11,letterSpacing:".2em",textTransform:"uppercase",fontFamily:"sans-serif"}}>Tap to reveal</div></div>):<CardFace card={cd} color={cc}/>}
           </div>
-          {/* Actions */}
-          {!showPrayOverlay && (
+          {!spo&&(
             <>
-              <PrimaryBtn onClick={advance} disabled={!canAdvance} style={{ marginTop:22, background:canAdvance?cardColor:"transparent", color:canAdvance?"#0e0906":"#6a5e50", border:`1px solid ${canAdvance?cardColor:"#4a3e32"}`, fontSize:12 }}>
-                {couplesAndPrayer&&flipped&&prayTurn===0?"Begin Praying →":mode==="couples"&&!isPrayer&&flipped&&turn===0?`${p2}'s Turn →`:idx>=deck.length-1?"Finish":"Next Card"}
-              </PrimaryBtn>
-              <button onClick={nextCard} style={{ background:"none", border:"none", color:"#7a6e60", fontSize:10, cursor:"pointer", marginTop:12, fontFamily:"sans-serif", letterSpacing:"0.12em", textTransform:"uppercase" }}>Skip</button>
+              <PB go={adv} off={!cAdv} style={{marginTop:20,background:cAdv?cc:"transparent",color:cAdv?"#0e0906":"#6a5e50",border:`1px solid ${cAdv?cc:"#4a3e32"}`,fontSize:12}}>
+                {cp&&flip&&pt===0?"Begin Praying →":mode==="couples"&&!pray&&flip&&turn===0?`${p2}'s Turn →`:idx>=deck.length-1?"Finish":"Next Card"}
+              </PB>
+              <button onClick={nxt} style={{background:"none",border:"none",color:"#7a6e60",fontSize:10,cursor:"pointer",marginTop:10,fontFamily:"sans-serif",letterSpacing:".12em",textTransform:"uppercase"}}>Skip</button>
             </>
           )}
         </div>
@@ -531,75 +819,55 @@ function App() {
     );
   }
 
-  /* END */
-  if (screen==="end") return (
-    <Shell bg="#0e0906">
-      <div style={{ textAlign:"center", maxWidth:380, animation:"fadeUp 0.6s ease" }}>
-        <div style={{ fontSize:30, marginBottom:20, opacity:0.45, color:"#C9A84C", animation:"pulse 3s infinite" }}>✦</div>
-        <h2 style={{ color:"#F5EFE4", fontSize:30, fontWeight:400, margin:"0 0 14px", fontStyle:"italic" }}>Well done.</h2>
-        <p style={{ fontFamily:"sans-serif", fontSize:14, color:"#a89880", lineHeight:1.85, margin:"0 0 32px" }}>You showed up with honesty.<br />That's not nothing — it's actually everything.</p>
-        <div style={{ color:"#C9A84C", fontSize:12, opacity:0.75, marginBottom:36, fontStyle:"italic", lineHeight:1.9 }}>
-          "Love is patient, love is kind…<br />it always hopes, always perseveres."
-          <div style={{ fontSize:10, opacity:0.65, fontStyle:"normal", letterSpacing:"0.1em", fontFamily:"sans-serif", marginTop:6 }}>— 1 Corinthians 13</div>
+  /* ══ END ══ */
+  if(sc==="end")return(
+    <Shell>
+      <div style={{textAlign:"center",maxWidth:380,animation:"fadeUp .6s"}}>
+        <div style={{fontSize:30,marginBottom:18,opacity:.45,color:"#C9A84C",animation:"pulse 3s infinite"}}>✦</div>
+        <h2 style={{color:"#F5EFE4",fontSize:30,fontWeight:400,margin:"0 0 14px",fontStyle:"italic"}}>Well done.</h2>
+        <p style={{fontFamily:"sans-serif",fontSize:14,color:"#a89880",lineHeight:1.85,margin:"0 0 28px"}}>You showed up with honesty.<br/>That's not nothing — it's everything.</p>
+        <div style={{color:"#C9A84C",fontSize:12,opacity:.75,marginBottom:32,fontStyle:"italic",lineHeight:1.9}}>"Love is patient, love is kind…<br/>it always hopes, always perseveres."<div style={{fontSize:10,opacity:.65,fontStyle:"normal",letterSpacing:".1em",fontFamily:"sans-serif",marginTop:5}}>— 1 Corinthians 13</div></div>
+        <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:10}}>
+          <PB go={()=>startG(lid,pray)} style={{background:"#C9A84C",color:"#0e0906",padding:"13px 26px",fontSize:12}}>Play Again</PB>
+          <GB go={()=>setSc("levels")}>New Level</GB>
+          {favs.length>0&&<GB go={()=>setSc("favs")}>♥ Saved ({favs.length})</GB>}
         </div>
-        <div style={{ display:"flex", gap:10, justifyContent:"center", flexWrap:"wrap", marginBottom:10 }}>
-          <PrimaryBtn onClick={()=>startGame(levelId,isPrayer)} style={{ background:"#C9A84C", color:"#0e0906", padding:"13px 28px", fontSize:12 }}>Play Again</PrimaryBtn>
-          <GhostBtn onClick={()=>setScreen("level-select")}>New Level</GhostBtn>
-          {favs.length>0 && <GhostBtn onClick={()=>setScreen("favorites")}>♥ Saved ({favs.length})</GhostBtn>}
-        </div>
-        <GhostBtn onClick={()=>{ setScreen("home"); setMode("solo"); }} style={{ width:"100%", boxSizing:"border-box", marginTop:4 }}>Home</GhostBtn>
+        <GB go={()=>{setSc("home");setMode("solo")}} style={{width:"100%",boxSizing:"border-box",marginTop:4}}>Home</GB>
       </div>
     </Shell>
   );
 
-  /* FAVORITES */
-  if (screen==="favorites") return (
-    <Shell bg="#0e0906">
-      {toast && <div style={{ position:"fixed", top:24, left:"50%", transform:"translateX(-50%)", background:"#2a2018", border:"1px solid #4a3e32", borderRadius:20, padding:"10px 22px", color:"#c8b89a", fontSize:12, fontFamily:"sans-serif", letterSpacing:"0.1em", zIndex:50, animation:"fadeUp 0.3s ease", whiteSpace:"nowrap" }}>{toast}</div>}
-      <div style={{ maxWidth:520, width:"100%", animation:"fadeUp 0.5s ease" }}>
-        <BackBtn onClick={()=>setScreen("home")} />
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24 }}>
-          <div>
-            <Overline color="#e8665a">Saved Cards</Overline>
-            <h2 style={{ color:"#F5EFE4", fontSize:26, fontWeight:400, margin:0, fontStyle:"italic" }}>
-              {favs.length===0?"Nothing saved yet.":`${favs.length} card${favs.length>1?"s":""} saved`}
-            </h2>
-          </div>
-          {favs.length>0 && (
-            <button onClick={shareFavs} style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:6, padding:"10px 18px", color:"#C9A84C", fontSize:11, fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", cursor:"pointer", fontFamily:"sans-serif", whiteSpace:"nowrap", marginTop:14, flexShrink:0 }}>↑ Copy All</button>
-          )}
+  /* ══ FAVORITES ══ */
+  if(sc==="favs")return(
+    <Shell>
+      <Toast msg={toast}/>
+      <div style={{maxWidth:520,width:"100%",animation:"fadeUp .5s"}}>
+        <BB go={()=>setSc("home")}/>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22}}>
+          <div><OL c="#e8665a">Saved Cards</OL><h2 style={{color:"#F5EFE4",fontSize:26,fontWeight:400,margin:0,fontStyle:"italic"}}>{favs.length===0?"Nothing saved yet.":`${favs.length} saved`}</h2></div>
+          {favs.length>0&&<button onClick={copyFavs} style={{background:"rgba(201,168,76,.08)",border:"1px solid rgba(201,168,76,.3)",borderRadius:6,padding:"10px 16px",color:"#C9A84C",fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",cursor:"pointer",fontFamily:"sans-serif",whiteSpace:"nowrap",marginTop:14,flexShrink:0}}>Copy All</button>}
         </div>
-        {favs.length===0 && <p style={{ fontFamily:"sans-serif", fontSize:14, color:"#9a8f82", lineHeight:1.7 }}>Tap ♥ on any revealed card during play to save it here.</p>}
-        {favs.map((f,i) => {
-          const lvl = f.levelId==="wild"?null:LEVELS.find(l=>l.id===f.levelId);
-          const col = lvl?lvl.color:PC;
-          const isEditing = editingNote===i;
-          return (
-            <div key={i} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, padding:"20px 22px", marginBottom:12, position:"relative", animation:`fadeUp 0.3s ease ${i*0.04}s both` }}>
-              <div style={{ fontSize:10, color:col, letterSpacing:"0.15em", textTransform:"uppercase", fontFamily:"sans-serif", marginBottom:8 }}>
-                {lvl?lvl.label:"Wild / Prayer"}{f.word?" · Wound Word":""}{f.style?" · Attachment Style":""}
+        {favs.length===0&&<p style={{fontFamily:"sans-serif",fontSize:14,color:"#9a8f82",lineHeight:1.7}}>Tap ♥ on any revealed card to save it here.</p>}
+        {favs.map((f,i)=>{
+          const l=f.levelId==="wild"?null:LEVELS.find(x=>x.id===f.levelId);
+          const col=l?l.color:PC;
+          const ed=enote===i;
+          return(
+            <div key={i} style={{background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:"18px 20px",marginBottom:10,position:"relative",animation:`fadeUp .3s ease ${i*.04}s both`}}>
+              <div style={{fontSize:10,color:col,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",marginBottom:7}}>{l?l.label:"Wild"}{f.word?" · Wound":""}{f.style?" · Attachment":""}</div>
+              {f.word&&<div style={{fontSize:15,color:col,marginBottom:5}}>{f.word}</div>}
+              {f.style&&<span style={{background:`${SC[f.style]}22`,border:`1px solid ${SC[f.style]}55`,borderRadius:20,padding:"3px 12px",fontSize:11,color:SC[f.style],fontFamily:"sans-serif",fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",display:"inline-block",marginBottom:9}}>{f.style}</span>}
+              <p style={{color:"#ede5d8",fontSize:14,lineHeight:1.72,margin:0,fontStyle:"italic",paddingRight:30}}>{f.q}</p>
+              {f.v&&<p style={{color:col,fontSize:11,marginTop:9,opacity:.6,fontFamily:"sans-serif",lineHeight:1.5}}>{f.v}</p>}
+              <div style={{marginTop:12,borderTop:"1px solid rgba(255,255,255,.05)",paddingTop:10}}>
+                {ed?(<div><textarea value={f.note||""} onChange={e=>updNote(i,e.target.value)} placeholder="Add a note…" rows={3} style={{width:"100%",background:"rgba(255,255,255,.05)",border:"1px solid #4a3e32",borderRadius:6,padding:"9px 11px",color:"#e0d8cc",fontSize:13,fontFamily:"sans-serif",lineHeight:1.6,outline:"none",boxSizing:"border-box"}} autoFocus/><button onClick={()=>setEnote(null)} style={{background:"none",border:"none",color:"#9a8f82",fontSize:11,cursor:"pointer",marginTop:5,fontFamily:"sans-serif",letterSpacing:".1em",textTransform:"uppercase"}}>Done</button></div>)
+                :(<button onClick={()=>setEnote(i)} style={{background:"none",border:"none",padding:0,cursor:"pointer",textAlign:"left",width:"100%"}}>{f.note?<p style={{color:"#9a8f82",fontSize:13,fontFamily:"sans-serif",lineHeight:1.65,margin:0,fontStyle:"italic"}}>"{f.note}"</p>:<span style={{color:"#6a5e50",fontSize:11,fontFamily:"sans-serif",letterSpacing:".1em",textTransform:"uppercase"}}>+ Add note</span>}</button>)}
               </div>
-              {f.word && <div style={{ fontSize:16, color:col, marginBottom:6 }}>{f.word}</div>}
-              {f.style && <span style={{ background:`${STYLE_COLORS[f.style]}22`, border:`1px solid ${STYLE_COLORS[f.style]}55`, borderRadius:20, padding:"3px 12px", fontSize:11, color:STYLE_COLORS[f.style], fontFamily:"sans-serif", fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", display:"inline-block", marginBottom:10 }}>{f.style}</span>}
-              <p style={{ color:"#ede5d8", fontSize:14, lineHeight:1.72, margin:0, fontStyle:"italic", paddingRight:32 }}>{f.q}</p>
-              {f.v && <p style={{ color:col, fontSize:11, marginTop:10, opacity:0.6, fontFamily:"sans-serif", lineHeight:1.5 }}>{f.v}</p>}
-              <div style={{ marginTop:14, borderTop:"1px solid rgba(255,255,255,0.05)", paddingTop:12 }}>
-                {isEditing ? (
-                  <div>
-                    <textarea value={f.note||""} onChange={e=>updateNote(i,e.target.value)} placeholder="Add a note, reflection, or what came up…" rows={3} style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid #4a3e32", borderRadius:6, padding:"10px 12px", color:"#e0d8cc", fontSize:13, fontFamily:"sans-serif", lineHeight:1.6, outline:"none", boxSizing:"border-box" }} autoFocus />
-                    <button onClick={()=>setEditingNote(null)} style={{ background:"none", border:"none", color:"#9a8f82", fontSize:11, cursor:"pointer", marginTop:6, fontFamily:"sans-serif", letterSpacing:"0.1em", textTransform:"uppercase" }}>Done</button>
-                  </div>
-                ) : (
-                  <button onClick={()=>setEditingNote(i)} style={{ background:"none", border:"none", padding:0, cursor:"pointer", textAlign:"left", width:"100%" }}>
-                    {f.note ? <p style={{ color:"#9a8f82", fontSize:13, fontFamily:"sans-serif", lineHeight:1.65, margin:0, fontStyle:"italic" }}>"{f.note}"</p> : <span style={{ color:"#6a5e50", fontSize:11, fontFamily:"sans-serif", letterSpacing:"0.1em", textTransform:"uppercase" }}>+ Add note</span>}
-                  </button>
-                )}
-              </div>
-              <button onClick={()=>{ const next=favs.filter((_,j)=>j!==i); setFavs(next); saveFavs(next); if(editingNote===i)setEditingNote(null); }} style={{ position:"absolute", top:12, right:14, background:"none", border:"none", cursor:"pointer", color:"#e8665a", fontSize:18, opacity:0.65 }}>♥</button>
+              <button onClick={()=>{const n=favs.filter((_,j)=>j!==i);setFavs(n);lsSet("kl_favs",n);if(enote===i)setEnote(null)}} style={{position:"absolute",top:11,right:12,background:"none",border:"none",cursor:"pointer",color:"#e8665a",fontSize:18,opacity:.65}}>♥</button>
             </div>
           );
         })}
-        {favs.length>0 && <GhostBtn onClick={()=>{ setFavs([]); saveFavs([]); setEditingNote(null); }} style={{ marginTop:8 }}>Clear All</GhostBtn>}
+        {favs.length>0&&<GB go={()=>{setFavs([]);lsSet("kl_favs",[]);setEnote(null)}} style={{marginTop:8}}>Clear All</GB>}
       </div>
     </Shell>
   );
@@ -607,7 +875,7 @@ function App() {
   return null;
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
