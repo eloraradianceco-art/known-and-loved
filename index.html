@@ -4,6 +4,9 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
   <title>Known &amp; Loved</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -11,17 +14,21 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
-    body{background:#0e0906;font-family:Georgia,serif;-webkit-tap-highlight-color:transparent}
+    body{background:#0a0907;font-family:'Cormorant Garant',Georgia,serif;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
     #root{min-height:100vh}
     input,textarea,button{font-family:inherit}
-    input::placeholder,textarea::placeholder{color:#6a5e50}
+    input::placeholder,textarea::placeholder{color:#5a5040;font-family:'DM Sans',sans-serif}
     textarea{resize:none}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    ::-webkit-scrollbar{width:3px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    @keyframes pulse{0%,100%{opacity:.4}50%{opacity:.85}}
-    @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-    @keyframes ripple{0%{transform:scale(.8);opacity:.6}100%{transform:scale(2.2);opacity:0}}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    @keyframes pulse{0%,100%{opacity:.3}50%{opacity:.75}}
+    @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+    @keyframes ripple{0%{transform:scale(.6);opacity:.5}100%{transform:scale(2.4);opacity:0}}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+    @keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
   </style>
 </head>
 <body>
@@ -251,19 +258,27 @@ const LEVELS=[
 const PC="#7eb8d4",PBG="#070c10";
 
 /* ── UI primitives ── */
-function Shell({bg="#0e0906",children}){return(
-  <div style={{minHeight:"100vh",background:bg,transition:"background .9s",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 16px",fontFamily:"Georgia,serif",position:"relative",overflow:"hidden"}}>
-    <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,opacity:.45,backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E")`}}/>
-    <div style={{position:"relative",zIndex:1,width:"100%",display:"flex",flexDirection:"column",alignItems:"center"}}>{children}</div>
-  </div>
-);}
-const OL=({c="#C9A84C",children})=><div style={{fontSize:11,letterSpacing:".3em",color:c,textTransform:"uppercase",marginBottom:14,fontFamily:"sans-serif",opacity:.9}}>{children}</div>;
-const BB=({go,label="← Back"})=><button onClick={go} style={{background:"none",border:"none",color:"#9a8f82",cursor:"pointer",fontSize:11,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",padding:0,marginBottom:28}}>{label}</button>;
-const PB=({go,children,off,style:s={}})=><button onClick={go} disabled={off} style={{border:"none",borderRadius:4,cursor:off?"not-allowed":"pointer",fontFamily:"sans-serif",fontWeight:700,letterSpacing:".13em",textTransform:"uppercase",transition:"opacity .2s",padding:"15px 36px",fontSize:13,...s}} onMouseOver={e=>{if(!off)e.currentTarget.style.opacity=".85"}} onMouseOut={e=>{e.currentTarget.style.opacity="1"}}>{children}</button>;
-const GB=({go,children,style:s={}})=><button onClick={go} style={{background:"none",border:"1px solid #4a3e32",borderRadius:4,color:"#a89880",padding:"13px 28px",fontSize:12,fontWeight:700,letterSpacing:".13em",textTransform:"uppercase",cursor:"pointer",fontFamily:"sans-serif",...s}} onMouseOver={e=>{e.currentTarget.style.borderColor="#7a6e60";e.currentTarget.style.color="#c8b89a"}} onMouseOut={e=>{e.currentTarget.style.borderColor="#4a3e32";e.currentTarget.style.color="#a89880"}}>{children}</button>;
-const Inp=({val,set,ph,style:s={}})=><input value={val} onChange={e=>set(e.target.value)} placeholder={ph} style={{display:"block",width:"100%",background:"rgba(255,255,255,.04)",border:"1px solid #3a2e22",borderRadius:6,padding:"14px 18px",color:"#F5EFE4",fontSize:15,outline:"none",boxSizing:"border-box",...s}}/>;
+function Shell({bg="#0a0907",glow=null,children}){
+  const glowStyle=glow?{
+    background:`radial-gradient(ellipse 100% 55% at 50% -10%, ${glow}12 0%, transparent 65%)`
+  }:{
+    background:"radial-gradient(ellipse 80% 40% at 50% -5%, rgba(201,168,76,0.06) 0%, transparent 60%)"
+  };
+  return(
+    <div style={{minHeight:"100vh",background:bg,transition:"background 1s ease",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 16px",fontFamily:"Cormorant Garant,Georgia,serif",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,...glowStyle}}/>
+      <div style={{position:"fixed",bottom:0,left:0,right:0,height:"40%",pointerEvents:"none",zIndex:0,background:"linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%)"}}/>
+      <div style={{position:"relative",zIndex:1,width:"100%",display:"flex",flexDirection:"column",alignItems:"center"}}>{children}</div>
+    </div>
+  );
+}
+const OL=({c="#C9A84C",children})=><div style={{fontSize:10,letterSpacing:".35em",color:c,textTransform:"uppercase",marginBottom:16,fontFamily:"DM Sans,sans-serif",fontWeight:500,opacity:.8}}>{children}</div>;
+const BB=({go,label="← Back"})=><button onClick={go} style={{background:"none",border:"none",color:"#7a7060",cursor:"pointer",fontSize:10,letterSpacing:".2em",textTransform:"uppercase",fontFamily:"DM Sans,sans-serif",fontWeight:500,padding:0,marginBottom:32,transition:"color .2s"}} onMouseOver={e=>e.currentTarget.style.color="#b0a090"} onMouseOut={e=>e.currentTarget.style.color="#7a7060"}>{label}</button>;
+const PB=({go,children,off,style:s={}})=><button onClick={go} disabled={off} style={{border:"none",borderRadius:3,cursor:off?"not-allowed":"pointer",fontFamily:"DM Sans,sans-serif",fontWeight:600,letterSpacing:".12em",textTransform:"uppercase",transition:"all .25s",padding:"15px 38px",fontSize:12,...s}} onMouseOver={e=>{if(!off){e.currentTarget.style.opacity=".88";e.currentTarget.style.transform="translateY(-1px)"}}} onMouseOut={e=>{e.currentTarget.style.opacity="1";e.currentTarget.style.transform="translateY(0)"}}>{children}</button>;
+const GB=({go,children,style:s={}})=><button onClick={go} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:3,color:"#8a8070",padding:"13px 28px",fontSize:11,fontWeight:600,letterSpacing:".15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"DM Sans,sans-serif",transition:"all .25s",...s}} onMouseOver={e=>{e.currentTarget.style.borderColor="rgba(255,255,255,0.18)";e.currentTarget.style.color="#c8b89a";e.currentTarget.style.background="rgba(255,255,255,0.04)"}} onMouseOut={e=>{e.currentTarget.style.borderColor="rgba(255,255,255,0.08)";e.currentTarget.style.color="#8a8070";e.currentTarget.style.background="rgba(255,255,255,0.02)"}}>{children}</button>;
+const Inp=({val,set,ph,style:s={}})=><input value={val} onChange={e=>set(e.target.value)} placeholder={ph} style={{display:"block",width:"100%",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:3,padding:"15px 18px",color:"#F5EFE4",fontSize:15,outline:"none",boxSizing:"border-box",fontFamily:"Cormorant Garant,Georgia,serif",transition:"border-color .2s",...s}} onFocus={e=>e.currentTarget.style.borderColor="rgba(255,255,255,0.18)"} onBlur={e=>e.currentTarget.style.borderColor="rgba(255,255,255,0.07)"}/>;
 
-function Toast({msg}){return msg?<div style={{position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",background:"#2a2018",border:"1px solid #4a3e32",borderRadius:20,padding:"10px 22px",color:"#c8b89a",fontSize:12,fontFamily:"sans-serif",zIndex:99,whiteSpace:"nowrap",animation:"fadeUp .3s"}}>{msg}</div>:null;}
+function Toast({msg}){return msg?<div style={{position:"fixed",top:28,left:"50%",transform:"translateX(-50%)",background:"rgba(20,16,12,0.92)",backdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:40,padding:"10px 24px",color:"#d4c8b0",fontSize:11,fontFamily:"DM Sans,sans-serif",fontWeight:500,letterSpacing:".06em",zIndex:99,whiteSpace:"nowrap",animation:"fadeUp .25s ease",boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>{msg}</div>:null;}
 
 /* ── Card renderer ── */
 function CardFace({card,color}){
@@ -273,8 +288,8 @@ function CardFace({card,color}){
       <div style={{fontSize:"clamp(1.5rem,5vw,1.9rem)",color,fontWeight:400,marginBottom:8}}>{card.word}</div>
       <div style={{color:"#9a8f82",fontSize:12,fontFamily:"sans-serif",lineHeight:1.6,marginBottom:18,fontStyle:"italic"}}>{card.def}</div>
       <div style={{height:1,background:`${color}25`,marginBottom:18}}/>
-      <p style={{color:"#F5EFE4",fontSize:"clamp(1rem,3vw,1.12rem)",lineHeight:1.72,margin:0,fontStyle:"italic"}}>{card.q}</p>
-      {card.v&&<p style={{color,fontSize:11,marginTop:20,opacity:.65,fontFamily:"sans-serif",lineHeight:1.6}}>{card.v}</p>}
+      <p style={{color:"#EDE8DF",fontSize:"clamp(1rem,3vw,1.12rem)",lineHeight:1.75,margin:0,fontStyle:"italic",fontWeight:300}}>{card.q}</p>
+      {card.v&&<p style={{color,fontSize:11,marginTop:20,opacity:.55,fontFamily:"DM Sans,sans-serif",lineHeight:1.7,letterSpacing:".04em"}}>{card.v}</p>}
     </div>
   );
   if(card.type==="style")return(
@@ -284,14 +299,14 @@ function CardFace({card,color}){
       </div>
       <div style={{color:"#9a8f82",fontSize:12,fontFamily:"sans-serif",lineHeight:1.65,marginBottom:18,fontStyle:"italic",textAlign:"center"}}>{card.desc}</div>
       <div style={{height:1,background:`${SC[card.style]}25`,marginBottom:18}}/>
-      <p style={{color:"#F5EFE4",fontSize:"clamp(1rem,3vw,1.12rem)",lineHeight:1.72,margin:0,fontStyle:"italic"}}>{card.q}</p>
-      {card.v&&<p style={{color:SC[card.style],fontSize:11,marginTop:20,opacity:.65,fontFamily:"sans-serif",lineHeight:1.6}}>{card.v}</p>}
+      <p style={{color:"#EDE8DF",fontSize:"clamp(1rem,3vw,1.12rem)",lineHeight:1.75,margin:0,fontStyle:"italic",fontWeight:300}}>{card.q}</p>
+      {card.v&&<p style={{color:SC[card.style],fontSize:11,marginTop:20,opacity:.55,fontFamily:"DM Sans,sans-serif",lineHeight:1.7,letterSpacing:".04em"}}>{card.v}</p>}
     </div>
   );
   return(
-    <div style={{animation:"fadeUp .35s"}}>
-      <p style={{color:"#F5EFE4",fontSize:"clamp(1.05rem,3.2vw,1.2rem)",lineHeight:1.72,margin:0,fontStyle:"italic"}}>{card.q}</p>
-      {card.v&&<p style={{color,fontSize:11,marginTop:24,opacity:.7,fontFamily:"sans-serif",lineHeight:1.6}}>{card.v}</p>}
+    <div style={{animation:"fadeUp .4s ease"}}>
+      <p style={{color:"#EDE8DF",fontSize:"clamp(1.1rem,3.4vw,1.25rem)",lineHeight:1.75,margin:0,fontStyle:"italic",fontWeight:300,letterSpacing:".01em"}}>{card.q}</p>
+      {card.v&&<p style={{color,fontSize:11,marginTop:26,opacity:.55,fontFamily:"DM Sans,sans-serif",fontWeight:400,lineHeight:1.7,letterSpacing:".04em"}}>{card.v}</p>}
     </div>
   );
 }
@@ -477,7 +492,7 @@ function App(){
 
   /* ══ HOME ══ */
   if(sc==="home")return(
-    <Shell>
+    <Shell glow="#C9A84C">
       <Toast msg={toast}/>
       <div style={{textAlign:"center",maxWidth:420,animation:"fadeUp .7s"}}>
         <OL>A Card Game for Christian Dating</OL>
@@ -491,7 +506,9 @@ function App(){
           onMouseOver={e=>e.currentTarget.style.background="rgba(107,142,196,.14)"}
           onMouseOut={e=>e.currentTarget.style.background="rgba(107,142,196,.08)"}
         >⬡ Live Session <span style={{fontSize:10,opacity:.6}}>· Real-time</span></button>
-        <button onClick={()=>{setMode("solo");startG("wild",true)}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,margin:"8px auto 0",background:"rgba(126,184,212,.06)",border:"1px solid rgba(126,184,212,.18)",borderRadius:8,padding:"11px 28px",cursor:"pointer",color:PC,fontSize:12,fontFamily:"sans-serif",letterSpacing:".15em",textTransform:"uppercase",width:"100%",maxWidth:320}}>
+        <button onClick={()=>{setMode("solo");startG("wild",true)}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,margin:"8px auto 0",background:"rgba(126,184,212,0.04)",border:"1px solid rgba(126,184,212,0.15)",borderRadius:3,padding:"11px 28px",cursor:"pointer",color:"#6ea8c4",fontSize:11,fontFamily:"DM Sans,sans-serif",fontWeight:500,letterSpacing:".18em",textTransform:"uppercase",width:"100%",maxWidth:320,transition:"all .25s"}}
+          onMouseOver={e=>{e.currentTarget.style.background="rgba(126,184,212,0.08)";e.currentTarget.style.borderColor="rgba(126,184,212,0.3)"}}
+          onMouseOut={e=>{e.currentTarget.style.background="rgba(126,184,212,0.04)";e.currentTarget.style.borderColor="rgba(126,184,212,0.15)"}}>
           <span style={{animation:"pulse 3s infinite"}}>✦</span> Prayer Mode
         </button>
         {favs.length>0&&<button onClick={()=>setSc("favs")} style={{background:"none",border:"none",color:"#9a8f82",fontSize:11,cursor:"pointer",marginTop:18,fontFamily:"sans-serif",letterSpacing:".15em",textTransform:"uppercase"}}>♥ {favs.length} Saved</button>}
@@ -583,7 +600,7 @@ function App(){
 
   /* ══ LIVE GAME ══ */
   if(sc==="live"&&lCard)return(
-    <Shell bg={lb2}>
+    <Shell bg={lb2} glow={lc2}>
       <Toast msg={toast}/>
       <div style={{maxWidth:480,width:"100%",display:"flex",flexDirection:"column",alignItems:"center"}}>
         {/* header */}
@@ -596,12 +613,12 @@ function App(){
           <div style={{color:lc2,fontSize:10,letterSpacing:".12em",textTransform:"uppercase",fontFamily:"sans-serif",opacity:.85}}>{lv2?.label}</div>
         </div>
         {/* progress */}
-        <div style={{width:"100%",height:2,background:"rgba(255,255,255,.06)",borderRadius:2,marginBottom:20}}>
-          <div style={{height:"100%",borderRadius:2,background:lc2,width:`${((lIdx+1)/lDeck.length)*100}%`,transition:"width .4s"}}/>
+        <div style={{width:"100%",height:1,background:"rgba(255,255,255,0.05)",borderRadius:1,marginBottom:22}}>
+          <div style={{height:"100%",borderRadius:1,background:`linear-gradient(90deg, ${lc2}80, ${lc2})`,width:`${((lIdx+1)/lDeck.length)*100}%`,transition:"width .5s cubic-bezier(0.16,1,0.3,1)",boxShadow:`0 0 8px ${lc2}60`}}/>
         </div>
         {/* card */}
-        <div onClick={()=>{if(host&&!lRev)revCard()}} style={{width:"100%",minHeight:200,background:lRev?`linear-gradient(150deg,${lb2} 0%,#181208 100%)`:"linear-gradient(150deg,#1e1710 0%,#141008 100%)",border:`1px solid ${lRev?lc2+"40":"rgba(255,255,255,.08)"}`,borderRadius:16,padding:"30px 26px",cursor:host&&!lRev?"pointer":"default",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",textAlign:"center",boxShadow:lRev?`0 0 60px ${lc2}12,0 20px 50px rgba(0,0,0,.6)`:"0 16px 40px rgba(0,0,0,.5)",transition:"all .45s",position:"relative",overflow:"hidden"}}>
-          <div style={{position:"absolute",top:13,left:15,fontSize:9,color:lc2,opacity:.4,letterSpacing:".2em",fontFamily:"sans-serif",textTransform:"uppercase"}}>{lv2?.label}</div>
+        <div onClick={()=>{if(host&&!lRev)revCard()}} style={{width:"100%",minHeight:200,background:lRev?`linear-gradient(160deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0.01) 100%)`:"linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.015) 100%)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)",border:`1px solid ${lRev?lc2+"28":"rgba(255,255,255,0.07)"}`,borderTop:`1px solid ${lRev?lc2+"18":"rgba(255,255,255,0.12)"}`,borderRadius:2,padding:"30px 26px",cursor:host&&!lRev?"pointer":"default",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",textAlign:"center",boxShadow:lRev?`0 0 100px ${lc2}0c, 0 30px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)`:"0 20px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",transition:"all .5s cubic-bezier(0.16,1,0.3,1)",position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:14,left:16,fontSize:9,color:lc2,opacity:.3,letterSpacing:".3em",fontFamily:"DM Sans,sans-serif",fontWeight:500,textTransform:"uppercase"}}>{lv2?.label}</div>
           {!lRev?(
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
               <div style={{fontSize:24,opacity:.2,color:lc2}}>✦</div>
@@ -742,7 +759,7 @@ function App(){
       <div style={{maxWidth:500,width:"100%",animation:"fadeUp .5s"}}>
         <BB go={()=>setSc(mode==="couples"?"setup":"home")}/>
         <OL>Choose a level</OL>
-        <h2 style={{color:"#F5EFE4",fontSize:26,fontWeight:400,margin:"0 0 22px"}}>Where do you want to begin?</h2>
+        <h2 style={{color:"#EDE8DF",fontSize:30,fontWeight:300,margin:"0 0 24px",letterSpacing:"-.01em"}}>Where do you want to begin?</h2>
         {LEVELS.map((l,i)=>(
           <button key={l.id} onClick={()=>startG(l.id)} style={{display:"flex",alignItems:"center",gap:18,width:"100%",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:"17px 18px",cursor:"pointer",textAlign:"left",marginBottom:8,transition:"all .2s",animation:`fadeUp .4s ease ${i*.06}s both`}}
             onMouseOver={e=>{e.currentTarget.style.background="rgba(255,255,255,.07)";e.currentTarget.style.borderColor=l.color+"55"}}
@@ -776,16 +793,16 @@ function App(){
     const spo=cp&&pt>=1&&pt<=2;
     const pp=pt===1?p1:p2;
     return(
-      <Shell bg={cb}>
+      <Shell bg={cb} glow={cc}>
         <Toast msg={toast}/>
         <div style={{maxWidth:440,width:"100%",display:"flex",flexDirection:"column",alignItems:"center"}}>
           <div style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
             <button onClick={()=>setSc("levels")} style={{background:"none",border:"none",color:"#9a8f82",cursor:"pointer",fontSize:11,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",padding:0}}>← Levels</button>
-            <div style={{color:"#7a6e60",fontSize:11,fontFamily:"sans-serif"}}>{idx+1} / {deck.length}</div>
-            <div style={{fontSize:11,color:cc,letterSpacing:".15em",textTransform:"uppercase",fontFamily:"sans-serif",opacity:.9}}>{pray?(mode==="couples"?"Couples Prayer":"Prayer"):lv?.label}</div>
+            <div style={{color:"#5a5040",fontSize:11,fontFamily:"DM Sans,sans-serif",fontWeight:300,letterSpacing:".04em"}}>{idx+1} / {deck.length}</div>
+            <div style={{fontSize:9,color:cc,letterSpacing:".25em",textTransform:"uppercase",fontFamily:"DM Sans,sans-serif",fontWeight:500,opacity:.7}}>{pray?(mode==="couples"?"Couples Prayer":"Prayer"):lv?.label}</div>
           </div>
-          <div style={{width:"100%",height:2,background:"rgba(255,255,255,.06)",borderRadius:2,marginBottom:26}}>
-            <div style={{height:"100%",borderRadius:2,background:cc,width:`${((idx+1)/deck.length)*100}%`,transition:"width .4s"}}/>
+          <div style={{width:"100%",height:1,background:"rgba(255,255,255,0.05)",borderRadius:1,marginBottom:28}}>
+            <div style={{height:"100%",borderRadius:1,background:`linear-gradient(90deg, ${cc}80, ${cc})`,width:`${((idx+1)/deck.length)*100}%`,transition:"width .5s cubic-bezier(0.16,1,0.3,1)",boxShadow:`0 0 8px ${cc}60`}}/>
           </div>
           {mode==="couples"&&!pray&&flip&&<div style={{background:`${cc}18`,border:`1px solid ${cc}33`,borderRadius:20,padding:"6px 18px",marginBottom:14,fontSize:11,color:cc,letterSpacing:".12em",fontFamily:"sans-serif",fontWeight:700,textTransform:"uppercase",animation:"fadeUp .3s"}}>{turn===0?`${p1}'s turn`:`${p2}'s turn`}</div>}
           {pray&&<div style={{position:"fixed",top:"40%",left:"50%",transform:"translate(-50%,-50%)",width:400,height:400,borderRadius:"50%",background:`radial-gradient(circle,${PC}0c 0%,transparent 70%)`,pointerEvents:"none",animation:"pulse 4s infinite"}}/>}
@@ -801,17 +818,17 @@ function App(){
               <button onClick={adv} style={{background:PC,color:"#0e0906",border:"none",borderRadius:4,padding:"14px 40px",fontSize:13,fontWeight:700,letterSpacing:".15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"sans-serif"}}>Amen {pt===1?`· ${p2}'s Turn →`:"· Next Card →"}</button>
             </div>
           )}
-          <div onClick={()=>!flip&&setFlip(true)} style={{width:"100%",minHeight:(cd.type==="wound"||cd.type==="style")&&flip?310:270,background:flip?`linear-gradient(150deg,${cb} 0%,#181208 100%)`:"linear-gradient(150deg,#1e1710 0%,#141008 100%)",border:`1px solid ${flip?cc+"40":"rgba(255,255,255,.08)"}`,borderRadius:16,padding:"32px 26px",cursor:flip?"default":"pointer",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",textAlign:"center",boxShadow:flip?`0 0 80px ${cc}12,0 24px 60px rgba(0,0,0,.6)`:"0 20px 50px rgba(0,0,0,.5)",transition:"all .45s",transform:exit?"translateX(-20px)":"translateX(0)",opacity:exit?0:1,position:"relative",overflow:"hidden"}}>
-            <div style={{position:"absolute",top:13,left:15,fontSize:9,color:cc,opacity:.4,letterSpacing:".2em",fontFamily:"sans-serif",textTransform:"uppercase"}}>{pray?"Prayer":cd.type==="wound"&&flip?"Wound Word":cd.type==="style"&&flip?"Attachment Style":lv?.label}</div>
+          <div onClick={()=>!flip&&setFlip(true)} style={{width:"100%",minHeight:(cd.type==="wound"||cd.type==="style")&&flip?320:280,background:flip?`linear-gradient(160deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0.01) 100%)`:"linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.015) 100%)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)",border:`1px solid ${flip?cc+"30":"rgba(255,255,255,0.07)"}`,borderTop:`1px solid ${flip?cc+"20":"rgba(255,255,255,0.12)"}`,borderRadius:2,padding:"36px 30px",cursor:flip?"default":"pointer",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",textAlign:"center",boxShadow:flip?`0 0 120px ${cc}0d, 0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)`:"0 24px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",transition:"all .5s cubic-bezier(0.16,1,0.3,1)",transform:exit?"translateX(-24px) scale(0.98)":"translateX(0) scale(1)",opacity:exit?0:1,position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",top:14,left:16,fontSize:9,color:cc,opacity:.35,letterSpacing:".3em",fontFamily:"DM Sans,sans-serif",fontWeight:500,textTransform:"uppercase"}}>{pray?"Prayer":cd.type==="wound"&&flip?"Wound Word":cd.type==="style"&&flip?"Attachment Style":lv?.label}</div>
             {flip&&<button onClick={e=>{e.stopPropagation();togFav(cd)}} style={{position:"absolute",top:9,right:13,background:"none",border:"none",cursor:"pointer",fontSize:20,color:isFav(cd)?"#e8665a":"#7a6e60",transition:"color .2s,transform .15s",transform:isFav(cd)?"scale(1.15)":"scale(1)"}}>♥</button>}
-            {!flip?(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}><div style={{fontSize:28,opacity:.2,color:cc,animation:pray?"pulse 3s infinite":"none"}}>✦</div><div style={{color:"#9a8f82",fontSize:11,letterSpacing:".2em",textTransform:"uppercase",fontFamily:"sans-serif"}}>Tap to reveal</div></div>):<CardFace card={cd} color={cc}/>}
+            {!flip?(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:16}}><div style={{fontSize:26,opacity:.15,color:cc,animation:pray?"pulse 3s infinite":"none"}}>✦</div><div style={{color:"#5a5040",fontSize:10,letterSpacing:".3em",textTransform:"uppercase",fontFamily:"DM Sans,sans-serif",fontWeight:500}}>Tap to reveal</div></div>):<CardFace card={cd} color={cc}/>}
           </div>
           {!spo&&(
             <>
               <PB go={adv} off={!cAdv} style={{marginTop:20,background:cAdv?cc:"transparent",color:cAdv?"#0e0906":"#6a5e50",border:`1px solid ${cAdv?cc:"#4a3e32"}`,fontSize:12}}>
                 {cp&&flip&&pt===0?"Begin Praying →":mode==="couples"&&!pray&&flip&&turn===0?`${p2}'s Turn →`:idx>=deck.length-1?"Finish":"Next Card"}
               </PB>
-              <button onClick={nxt} style={{background:"none",border:"none",color:"#7a6e60",fontSize:10,cursor:"pointer",marginTop:10,fontFamily:"sans-serif",letterSpacing:".12em",textTransform:"uppercase"}}>Skip</button>
+              <button onClick={nxt} style={{background:"none",border:"none",color:"#4a4030",fontSize:10,cursor:"pointer",marginTop:12,fontFamily:"DM Sans,sans-serif",fontWeight:400,letterSpacing:".2em",textTransform:"uppercase",transition:"color .2s"}} onMouseOver={e=>e.currentTarget.style.color="#7a7060"} onMouseOut={e=>e.currentTarget.style.color="#4a4030"}>Skip</button>
             </>
           )}
         </div>
