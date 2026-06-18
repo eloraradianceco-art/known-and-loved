@@ -247,13 +247,47 @@ CARDS.attachment=[
   {q:"What's the difference between needing someone healthily and being anxiously attached?",v:null},
   {q:"What would a relationship look like if both people came in having done real work on their wounds?",v:'"Two are better than one." — Ecclesiastes 4:9'},
 ];
+CARDS.icebreaker=[
+  {q:"What's something you could happily talk about for an hour straight?",v:null},
+  {q:"What's something you're weirdly good at?",v:null},
+  {q:"Best trip you've ever taken \u2014 and what made it?",v:null},
+  {q:"What's on repeat for you lately \u2014 a song, show, or snack?",v:null},
+  {q:"A free Saturday with zero obligations \u2014 what are you doing?",v:null},
+  {q:"What were you obsessed with as a kid that you'd still defend today?",v:null},
+  {q:"Coffee, tea, or neither \u2014 and how do you take it?",v:null},
+  {q:"What's a little thing that instantly makes your day better?",v:null},
+  {q:"Mountains, beach, or city?",v:null},
+  {q:"What's something you've always wanted to try but haven't yet?",v:null},
+  {q:"What's the last thing that made you laugh out loud?",v:null},
+  {q:"If you could instantly master one skill, what would it be?",v:null},
+  {q:"What's your go-to comfort meal?",v:null},
+  {q:"Early bird or night owl \u2014 honestly?",v:null},
+  {q:"What's a movie or show you'll rewatch every time?",v:null},
+  {q:"Best live event or concert you've ever been to?",v:null},
+  {q:"What's your ideal way to spend a rainy day?",v:null},
+  {q:"Dogs, cats, both, or neither?",v:null},
+  {q:"Where have you never been that you really want to go?",v:null},
+  {q:"What are you secretly looking forward to this month?",v:null},
+  {q:"If you had one extra hour every day, how would you use it?",v:null},
+  {q:"What's a food you could genuinely eat every day?",v:null},
+  {q:"What's the best gift you've ever been given?",v:null},
+  {q:"Board games, video games, sports, or none of the above?",v:null},
+  {q:"What song instantly puts you in a good mood?",v:null},
+  {q:"What's something small you're a little obsessive about?",v:null},
+  {q:"Sweet or savory \u2014 pick a side and defend it?",v:null},
+  {q:"What's a skill or hobby you wish you had more time for?",v:null},
+  {q:"What's something fun on your list to do this year?",v:null},
+  {q:"What's a place that always feels like home to you?",v:null},
+];
+
 const LEVELS=[
-  {id:"discover",label:"Discover",num:"01",tagline:"Who are you, really?",desc:"Light and curious. Get past the surface.",color:"#C9A84C",bg:"#12100a"},
-  {id:"deepen",label:"Deepen",num:"02",tagline:"What do you actually believe?",desc:"Faith, values, and true compatibility.",color:"#8B5A8E",bg:"#0d0a12"},
-  {id:"reveal",label:"Reveal",num:"03",tagline:"Let yourself be known.",desc:"Vulnerability, wounds, and what you're building toward.",color:"#A85050",bg:"#130909"},
-  {id:"howwelove",label:"How We Love",num:"04",tagline:"Where did you learn to love?",desc:"Love styles, wounds, and childhood patterns.",color:"#B5647A",bg:"#120810"},
-  {id:"attachment",label:"Attachment Styles",num:"05",tagline:"How you love is how you were loved.",desc:"Anxious, Avoidant, Disorganized, and Secure.",color:"#6B8EC4",bg:"#080c14"},
-  {id:"wild",label:"Wild",num:"✦",tagline:"Draw one. Trust it.",desc:"Prayer, scripture, moments that can change everything.",color:"#4A9E8E",bg:"#060f0e"},
+  {id:"icebreaker",label:"First Light",num:"01",tagline:"Let's start easy.",desc:"Hobbies, favorites, and the fun stuff first.",color:"#E08E6B",bg:"#130c08"},
+  {id:"discover",label:"Discover",num:"02",tagline:"Who are you, really?",desc:"Light and curious. Get past the surface.",color:"#C9A84C",bg:"#12100a"},
+  {id:"deepen",label:"Deepen",num:"03",tagline:"What do you actually believe?",desc:"Faith, values, and true compatibility.",color:"#8B5A8E",bg:"#0d0a12"},
+  {id:"reveal",label:"Reveal",num:"04",tagline:"Let yourself be known.",desc:"Vulnerability, wounds, and what you're building toward.",color:"#A85050",bg:"#130909"},
+  {id:"howwelove",label:"How We Love",num:"05",tagline:"Where did you learn to love?",desc:"Love styles, wounds, and childhood patterns.",color:"#B5647A",bg:"#120810"},
+  {id:"attachment",label:"Attachment Styles",num:"06",tagline:"How you love is how you were loved.",desc:"Anxious, Avoidant, Disorganized, and Secure.",color:"#6B8EC4",bg:"#080c14"},
+  {id:"wild",label:"Wild",num:"\u2726",tagline:"Draw one. Trust it.",desc:"Prayer, scripture, moments that can change everything.",color:"#4A9E8E",bg:"#060f0e"},
 ];
 const PC="#7eb8d4",PBG="#070c10";
 
@@ -497,7 +531,7 @@ function App(){
       <div style={{textAlign:"center",maxWidth:420,animation:"fadeUp .7s"}}>
         <OL>A Card Game for Christian Dating</OL>
         <h1 style={{fontSize:"clamp(2.8rem,8vw,4.2rem)",fontWeight:400,color:"#F5EFE4",lineHeight:1.1,margin:"0 0 10px"}}>Known<br/><em style={{color:"#C9A84C"}}>&amp; Loved</em></h1>
-        <p style={{fontFamily:"sans-serif",fontSize:14,lineHeight:1.85,color:"#a89880",margin:"18px 0 28px"}}>Six levels of conversation — from surface to soul.</p>
+        <p style={{fontFamily:"sans-serif",fontSize:14,lineHeight:1.85,color:"#a89880",margin:"18px 0 28px"}}>Seven levels of conversation — from surface to soul.</p>
         <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:10}}>
           <PB go={()=>{setMode("solo");setSc("levels")}} style={{background:"#C9A84C",color:"#0e0906"}}>Solo Play</PB>
           <PB go={()=>{setMode("couples");setSc("setup")}} style={{background:"transparent",border:"1px solid #4a3e32",color:"#C9A84C"}}>Couples</PB>
