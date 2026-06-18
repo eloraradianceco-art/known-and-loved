@@ -33,9 +33,17 @@
 </head>
 <body>
 <div id="root"></div>
+<script>
+(function(){
+  function fatal(m){try{var r=document.getElementById('root');if(r&&r.childElementCount===0){r.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:30px;box-sizing:border-box;font-family:-apple-system,Segoe UI,sans-serif;background:#0a0907;color:#d4c8b0;text-align:center;line-height:1.65"><div style="max-width:340px"><div style="font-size:15px;margin-bottom:10px">Known &amp; Loved couldn&#39;t finish loading.</div><div style="font-size:12px;color:#8a8070;word-break:break-word">'+(m||'Unknown error')+'</div><div style="font-size:11px;color:#6a5e50;margin-top:16px">If you use a content/ad blocker or iOS Lockdown Mode, try disabling it for this page and reload.</div></div></div>';}}catch(e){}}
+  window.addEventListener('error',function(e){fatal(e.message)});
+  window.addEventListener('unhandledrejection',function(e){fatal((e.reason&&e.reason.message)||String(e.reason||''))});
+  setTimeout(function(){var r=document.getElementById('root');if(r&&r.childElementCount===0)fatal('The app could not start \u2014 a required script may have been blocked or failed to load.');},6000);
+})();
+</script>
 <script type="text/babel">
 const{useState,useEffect,useRef}=React;
-const{createClient}=supabase;
+const createClient=(window.supabase&&window.supabase.createClient)?window.supabase.createClient:function(){return null};
 const SB=createClient(
   'https://hxqkzosvovhbizuefuii.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4cWt6b3N2b3ZoYml6dWVmdWlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4ODA1MTgsImV4cCI6MjA5NjQ1NjUxOH0.l26BqXiGdNvyVWMJEfrgdNIUB4IM1rAA7P6sPb-LTbM'
@@ -444,6 +452,7 @@ function App(){
 
   /* ── session actions ── */
   const createSess=async()=>{
+    if(!SB){setSErr("Live sessions need an internet connection right now.");return;}
     setBusy(true);setSErr("");
     try{
       const c=genCode();
@@ -456,6 +465,7 @@ function App(){
   };
 
   const joinSess=async()=>{
+    if(!SB){setSErr("Live sessions need an internet connection right now.");return;}
     setBusy(true);setSErr("");
     const c=jCode.toUpperCase().trim();
     try{
